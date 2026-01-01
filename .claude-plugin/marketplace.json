@@ -1,0 +1,23 @@
+{
+  "name": "haoming-skills",
+  "owner": {
+    "name": "haoming"
+  },
+  "metadata": {
+    "description": "Grafana Jsonnet workflows and reporting skills catalog.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "grafana-skills",
+      "description": "Grafana Jsonnet conversion, refactor, and report migration skills.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/grafana-json-to-jsonnet",
+        "./skills/grafana-jsonnet-refactor",
+        "./skills/grafana-report-to-dashboard"
+      ]
+    }
+  ]
+}
