@@ -9,6 +9,7 @@ local DATASOURCE_UID = 'prometheus-thanos';
 
 local config = {
   datasource: {
+    // Example datasource type; replace as needed.
     type: 'prometheus',
     uid: DATASOURCE_UID,
   },
@@ -39,11 +40,27 @@ local variables = [
 
 // -------------------- Dashboard --------------------
 
-g.dashboard.new('Example API Dashboard')
+local baseDashboard = g.dashboard.new('Example API Dashboard')
 + g.dashboard.withUid('example-api')
 + g.dashboard.withTimezone(config.timezone)
 + g.dashboard.time.withFrom(config.timeFrom)
 + g.dashboard.time.withTo(config.timeTo)
 + g.dashboard.withRefresh('30s')
 + g.dashboard.withVariables(variables)
-+ g.dashboard.withPanels(panelsLib.build(config))
++ g.dashboard.withPanels(panelsLib.build(config));
+
+baseDashboard {
+  __inputs: [
+    {
+      name: 'DS_PROMETHEUS',
+      label: 'Prometheus Datasource',
+      type: 'datasource',
+      pluginId: 'prometheus',
+      pluginName: 'Prometheus',
+    },
+  ],
+  __requires: [
+    { type: 'datasource', id: 'prometheus', name: 'Prometheus', version: '1.0.0' },
+    { type: 'grafana', id: 'grafana', name: 'Grafana', version: config.pluginVersion },
+  ],
+}

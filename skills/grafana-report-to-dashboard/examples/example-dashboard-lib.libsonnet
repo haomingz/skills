@@ -5,6 +5,8 @@ local standards = import '../../lib/standards.libsonnet';
 local themes = import '../../lib/themes.libsonnet';
 local clickhouse = import '../../lib/clickhouse.libsonnet';
 
+// Example queries only. Replace filters (like environment:prod) or parameterize with variables.
+
 local qpsTarget(config) = {
   refId: 'A',
   datasource: config.datasources.elasticsearch,

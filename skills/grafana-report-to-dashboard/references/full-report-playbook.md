@@ -1,0 +1,178 @@
+# Full Report-to-Dashboard Playbook
+
+Use this document to migrate Python report scripts into Grafana Jsonnet dashboards with ClickHouse and Elasticsearch support.
+
+## Goals and constraints
+
+- Preserve calculations and metric semantics from the report.
+- Support both Elasticsearch (ES7/ES8) and ClickHouse.
+- Keep the dashboard structure readable and maintainable.
+
+## Step 1: Analyze the report script
+
+Capture:
+- Queries (ES DSL and SQL)
+- Aggregations, group-by fields, filters, and time windows
+- Output sections (tables, summaries, alerts)
+- Any post-processing logic done in Python
+
+If the report calculates derived metrics in Python, plan where those calculations will live:
+- Prefer moving them into query expressions when possible.
+- If not possible, use Grafana transformations or calculations in Jsonnet.
+
+## Step 2: Define dashboard structure
+
+Map report sections to panels:
+- Summary counters -> `panels.statPanel`
+- Time-series trends -> `panels.timeseriesPanel`
+- Top-N lists -> `panels.tablePanel`
+- Distributions -> `panels.barGaugePanel` or Grafonnet heatmap
+
+Mapping checklist:
+- Each report section has a corresponding panel
+- Panel titles match report section names
+- Ordering follows the report narrative
+
+## Step 3: Configure dual datasources
+
+Use a shared config with explicit datasource objects:
+
+```jsonnet
+local ES_UID = 'elasticsearch-prod';
+local CH_UID = 'clickhouse-prod';
+
+local config = {
+  datasources: {
+    elasticsearch: { type: 'elasticsearch', uid: ES_UID },
+    clickhouse: { type: 'grafana-clickhouse-datasource', uid: CH_UID },
+  },
+  pluginVersion: '12.3.0',
+  timezone: 'browser',
+  timeFrom: 'now-24h',
+  timeTo: 'now',
+};
+```
+
+Manual import mode (datasource picker):
+
+```jsonnet
+// local ES_UID = '${DS_ELASTICSEARCH}';
+// local CH_UID = '${DS_CLICKHOUSE}';
+```
+
+If you support manual import, add `__inputs` / `__requires` to the final export:
+
+```jsonnet
+baseDashboard {
+  __inputs: [
+    {
+      name: 'DS_ELASTICSEARCH',
+      label: 'Elasticsearch Datasource',
+      type: 'datasource',
+      pluginId: 'elasticsearch',
+      pluginName: 'Elasticsearch',
+    },
+    {
+      name: 'DS_CLICKHOUSE',
+      label: 'ClickHouse Datasource',
+      type: 'datasource',
+      pluginId: 'grafana-clickhouse-datasource',
+      pluginName: 'ClickHouse',
+    },
+  ],
+  __requires: [
+    { type: 'datasource', id: 'elasticsearch', name: 'Elasticsearch', version: '1.0.0' },
+    { type: 'datasource', id: 'grafana-clickhouse-datasource', name: 'ClickHouse', version: '1.0.0' },
+    { type: 'grafana', id: 'grafana', name: 'Grafana', version: config.pluginVersion },
+  ],
+}
+```
+
+## Step 4: Translate queries
+
+### Elasticsearch (ES7/ES8)
+
+- Convert Python ES DSL into Grafana query targets.
+- Keep index patterns and time field consistent.
+- Preserve aggregation buckets and filters.
+- Use `references/datasource-mapping.md` for target patterns.
+
+### ClickHouse
+
+- Convert report SQL to ClickHouse query targets.
+- Ensure time filters use Grafana time variables.
+- Prefer grouping by time buckets compatible with Grafana.
+
+## Step 5: Build panels with unified libs
+
+Example panel using ClickHouse:
+
+```jsonnet
+local errorRatePanel = panels.timeseriesPanel(
+  title='Error Rate',
+  targets=[clickhouse.sqlTarget(
+    config.datasources.clickhouse,
+    |||
+SELECT
+  $__timeGroup(timestamp, '1m') AS time,
+  sum(errors) / sum(total) AS error_rate
+FROM api_errors
+WHERE $__timeFilter(timestamp)
+GROUP BY time
+ORDER BY time
+    |||
+  )],
+  datasource=config.datasources.clickhouse,
+  unit=standards.units.errorRate,
+  pluginVersion=config.pluginVersion
+)
++ g.panel.timeSeries.gridPos.withH(6)
++ g.panel.timeSeries.gridPos.withW(12);
+```
+
+Example panel using Elasticsearch:
+
+```jsonnet
+local topErrors = panels.tablePanel(
+  title='Top Errors',
+  targets=[{
+    refId: 'A',
+    datasource: config.datasources.elasticsearch,
+    queryType: 'lucene',
+    query: 'status:500',
+    timeField: '@timestamp',
+    metrics: [
+      { id: '1', type: 'count' },
+    ],
+    bucketAggs: [
+      {
+        id: '2',
+        type: 'terms',
+        field: 'message.keyword',
+        settings: { size: 10 },
+      },
+    ],
+  }],
+  datasource=config.datasources.elasticsearch,
+  pluginVersion=config.pluginVersion
+);
+```
+
+## Step 6: Assemble dashboard
+
+- Include variables for environment, service, or cluster if the report uses them.
+- Preserve time range defaults from the report.
+- Keep tags and descriptions aligned with the report purpose.
+
+## Step 7: Validate
+
+- Compile with `mixin/build.sh` or `mixin/build.ps1`.
+- Import into Grafana and compare against the original report for a known time window.
+- Verify that ES7/ES8 and ClickHouse results match expectations.
+
+## Common pitfalls
+
+- Mixing datasources inside a single panel target list.
+- Changing aggregation logic while simplifying queries.
+- Losing report context (labels, section titles, or ordering).
+- Ignoring Python post-processing logic that affects results.

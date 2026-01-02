@@ -51,10 +51,10 @@ clickhouse.sqlTarget(
 - Latency (ms) -> `standards.thresholds.latencyMilliseconds`
 - Neutral/blue -> `standards.thresholds.neutral`
 
-## Fallback Strategy
+## Unsupported panels
 
-If a panel type is unknown:
+If a panel type is unknown or not supported by unified libs:
 
-1. Keep the raw panel JSON in `<dashboard>_raw_panels.json`.
-2. Wrap it in a helper in `<dashboard>_panels.libsonnet`.
-3. Convert manually later using the closest `panels.*` constructor.
+1. Use Grafonnet directly in the same dashboard file.
+2. Apply `standards.units.*` and `standards.thresholds.*` where possible.
+3. Do not emit raw JSON files or dashboard-specific lib files.

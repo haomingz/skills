@@ -401,24 +401,21 @@ g.dashboard.new('Dashboard Name')
 
 ## 13. File Organization
 
-### entrypoint + lib Structure
+### Single-file Structure
 
 ```
 mixin/application/
-├── dashboard.jsonnet          # entrypoint
-└── lib/
-    └── dashboard_panels.libsonnet  # panel definitions
+└── dashboard.jsonnet          # single self-contained file
 ```
 
-**entrypoint (dashboard.jsonnet):**
+**dashboard.jsonnet includes:**
 - Imports
 - Config
 - Variables
+- Panel definitions
 - Dashboard definition
 
-**lib (dashboard_panels.libsonnet):**
-- Panel definitions (reusable panel builders)
-- If panels are few (<5), can define directly in entrypoint
+Do not create dashboard-specific lib files for this skill.
 
 ## 14. Common Errors
 
@@ -481,4 +478,4 @@ local config = {
 
 ## Complete Example
 
-See `examples/example-output.jsonnet` for a complete dashboard example following best practices.
+See `examples/example-output.jsonnet` for a scaffold-style example. Inline all panels and variables into a single file for final output.
