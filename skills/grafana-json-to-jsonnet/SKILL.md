@@ -74,27 +74,59 @@ local prom = import '../lib/prometheus.libsonnet';
 local standards = import '../lib/standards.libsonnet';
 local themes = import '../lib/themes.libsonnet';
 
-// 3. Config definition
+// 3. Datasource configuration (dual-mode support)
+// For provisioning: use actual UID
+// For manual import: switch to '${DS_PROMETHEUS}' to allow datasource selection
+local DATASOURCE_UID = 'prometheus-thanos';  // Replace with your actual datasource UID
+// local DATASOURCE_UID = '${DS_PROMETHEUS}';  // manual import mode (uncomment this line, comment above line)
+
 local config = {
-  datasource: { type: 'prometheus', uid: 'prometheus-thanos' },
-  timezone: 'browser',
-  timeFrom: 'now-6h',
-  pluginVersion: '12.3.0',
+  datasource: {
+    type: 'prometheus',  // Change to your datasource type (e.g., 'loki', 'tempo', 'elasticsearch')
+    uid: DATASOURCE_UID,
+  },
+  timezone: 'browser',  // Or 'utc', or specific timezone like 'Asia/Shanghai'
+  timeFrom: 'now-6h',  // Adjust default time range as needed (e.g., 'now-1h', 'now-24h', 'now-7d')
+  timeTo: 'now',
+  pluginVersion: '12.3.0',  // Current Grafana version, update as needed
 };
 
 // 4. Common selectors/helpers (if needed for this dashboard)
-local baseSelector = '{job="api",env="prod"}';
+// Replace with your actual Prometheus label selectors
+local baseSelector = '{job="api",env="prod"}';  // Example: adjust to match your metrics
 
 // 5. Variable definitions
-local hostnameVariable = g.dashboard.variable.query.new(...);
-local environmentVariable = g.dashboard.variable.query.new(...);
+local hostnameVariable = g.dashboard.variable.query.new(
+  'hostname',
+  'label_values(up, hostname)'
+)
++ g.dashboard.variable.query.withDatasource(
+  type=config.datasource.type,
+  uid=config.datasource.uid
+)
++ g.dashboard.variable.query.selectionOptions.withIncludeAll(true)
++ g.dashboard.variable.query.refresh.onLoad();
+
+local environmentVariable = g.dashboard.variable.query.new(
+  'environment',
+  'label_values(up{hostname=~"$hostname"}, environment)'
+)
++ g.dashboard.variable.query.withDatasource(
+  type=config.datasource.type,
+  uid=config.datasource.uid
+)
++ g.dashboard.variable.query.selectionOptions.withIncludeAll(true)
++ g.dashboard.variable.query.refresh.onLoad();
 
 // 6. Panel definitions (ALL panels defined here, not in separate lib file)
+// NOTE: Replace metric names, queries, and panel titles with your actual dashboard requirements
 local qpsStat = panels.statPanel(
   title='Current QPS',
-  targets=[prom.instantTarget('sum(rate(http_requests_total' + baseSelector + '[1m]))', '')],
+  targets=[prom.instantTarget('sum(rate(http_requests_total' + baseSelector + '[1m]))', '')],  // Replace with your metrics
+  datasource=config.datasource,
   unit=standards.units.qps,
-  thresholds=standards.thresholds.neutral
+  thresholds=standards.thresholds.neutral,
+  pluginVersion=config.pluginVersion
 )
 + g.panel.stat.gridPos.withH(layouts.stat.height)
 + g.panel.stat.gridPos.withW(layouts.stat.width)
@@ -104,9 +136,11 @@ local qpsStat = panels.statPanel(
 local errorRatePanel = panels.timeseriesPanel(
   title='Error Rate',
   targets=[prom.errorRate('http_requests_total', baseSelector, 'status', 'Error Rate')],
+  datasource=config.datasource,
   unit=standards.units.errorRate,
   legendConfig=standards.legend.hidden,
-  theme=themes.timeseries.standard
+  theme=themes.timeseries.standard,
+  pluginVersion=config.pluginVersion
 )
 + g.panel.timeSeries.gridPos.withH(6)
 + g.panel.timeSeries.gridPos.withW(12)
@@ -115,15 +149,86 @@ local errorRatePanel = panels.timeseriesPanel(
 
 // ... more panels ...
 
-// 7. Dashboard construction
-g.dashboard.new('Dashboard Name')
-+ g.dashboard.withUid('dashboard-uid')
-+ g.dashboard.withTags(['tag1', 'tag2'])
-+ g.dashboard.time.withFrom(config.timeFrom)
+// 7. Annotations configuration
+local annotationsObj = {
+  list: [
+    {
+      builtIn: 1,
+      datasource: { type: 'grafana', uid: '-- Grafana --' },
+      enable: true,
+      hide: true,
+      iconColor: 'rgba(0, 211, 255, 1)',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+    },
+  ],
+};
+
+// 8. Dashboard construction (using chained method calls)
+local baseDashboard = g.dashboard.new('Dashboard Name')  // Replace with your dashboard title
++ g.dashboard.withUid('dashboard-uid')  // Replace with unique dashboard UID (lowercase, hyphens)
 + g.dashboard.withTimezone(config.timezone)
-+ g.dashboard.withRefresh('30s')
++ g.dashboard.time.withFrom(config.timeFrom)
++ g.dashboard.time.withTo(config.timeTo)
++ g.dashboard.withEditable(true)
++ g.dashboard.withTags(['tag1', 'tag2'])  // Replace with relevant tags for your dashboard
++ g.dashboard.withRefresh('30s')  // Adjust refresh interval (e.g., '5s', '1m', '5m', '15m')
 + g.dashboard.withVariables([hostnameVariable, environmentVariable])
-+ g.dashboard.withPanels([qpsStat, errorRatePanel, /* ... more panels ... */])
++ g.dashboard.withPanels([qpsStat, errorRatePanel, /* ... more panels ... */]);
+
+// 9. Final export with metadata (supports manual import with datasource selection)
+// NOTE: Adjust datasource types in __inputs and __requires to match your actual datasources
+// Common datasource types: prometheus, loki, tempo, elasticsearch, grafana-clickhouse-datasource, mysql, postgres
+baseDashboard {
+  annotations: annotationsObj,
+  graphTooltip: 0,  // 0 = default, 1 = shared crosshair, 2 = shared tooltip
+  schemaVersion: 42,
+  version: 1,
+  __inputs: [
+    {
+      name: 'DS_PROMETHEUS',  // Change to match your datasource (e.g., DS_LOKI, DS_TEMPO)
+      label: 'Prometheus Datasource',  // Update label to match datasource type
+      description: 'Select Prometheus datasource',  // Update description
+      type: 'datasource',
+      pluginId: 'prometheus',  // Change to actual plugin ID (e.g., 'loki', 'tempo', 'elasticsearch')
+      pluginName: 'Prometheus',  // Change to actual plugin name
+    },
+  ],
+  __elements: {},
+  __requires: [
+    {
+      type: 'datasource',
+      id: 'prometheus',  // Change to actual datasource plugin ID
+      name: 'Prometheus',  // Change to actual datasource name
+      version: '1.0.0',
+    },
+    {
+      type: 'grafana',
+      id: 'grafana',
+      name: 'Grafana',
+      version: config.pluginVersion,
+    },
+    {
+      type: 'panel',
+      id: 'timeseries',
+      name: 'Time series',
+      version: '',
+    },
+    {
+      type: 'panel',
+      id: 'stat',
+      name: 'Stat',
+      version: '',
+    },
+    {
+      type: 'panel',
+      id: 'table',
+      name: 'Table',
+      version: '',
+    },
+    // Add other panel types as needed: bargauge, gauge, etc.
+  ],
+}
 ```
 
 **Key Points:**
