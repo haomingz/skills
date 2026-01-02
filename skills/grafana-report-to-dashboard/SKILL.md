@@ -1,6 +1,6 @@
 ---
 name: grafana-report-to-dashboard
-description: Convert Python Elasticsearch report scripts into Grafana Jsonnet dashboards, and add dual ClickHouse + Elasticsearch (ES7/ES8) datasource support. Use when migrating report scripts to Grafana or when a dashboard must support multiple data backends.
+description: This skill should be used when converting Python report scripts to Grafana Jsonnet dashboards with multi-datasource support. Trigger phrases include "migrate report to grafana", "convert python report", "elasticsearch to grafana", "report script to dashboard", "clickhouse grafana dashboard". Use when migrating Elasticsearch report scripts to Grafana or when a dashboard must support dual ClickHouse + Elasticsearch (ES7/ES8) datasource backends.
 ---
 
 # Report Script to Grafana Jsonnet Dashboard
@@ -31,6 +31,6 @@ description: Convert Python Elasticsearch report scripts into Grafana Jsonnet da
 6. Compile with `mixin/build.sh` or `mixin/build.ps1` and verify in Grafana.
 
 ## Examples
-- `references/example-report.py`
-- `references/example-dashboard.jsonnet`
-- `references/example-dashboard-lib.libsonnet`
+- `examples/example-report.py`
+- `examples/example-dashboard.jsonnet`
+- `examples/example-dashboard-lib.libsonnet`

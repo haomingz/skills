@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+env/
+venv/
+.venv/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Local settings and state
+*.local.md
+.env
+.env.local
+
+# Build outputs
+*.jsonnet.out
+*.json.tmp
+mixin/dashboards/*.json
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+*.log

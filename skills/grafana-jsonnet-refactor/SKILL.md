@@ -1,6 +1,6 @@
 ---
 name: grafana-jsonnet-refactor
-description: Refactor a single, monolithic Grafana Jsonnet dashboard into a split structure (entrypoint + lib) that matches the grafana-code mixin conventions. Use when a dashboard is hard to maintain or needs shared helpers extracted.
+description: This skill should be used when refactoring monolithic Grafana Jsonnet dashboards into a clean split structure (entrypoint + lib). Trigger phrases include "refactor grafana jsonnet", "split dashboard", "extract lib helpers", "clean up jsonnet dashboard", "modularize dashboard". Use when a dashboard is hard to maintain, has duplicated code, or needs shared helpers extracted to match grafana-code mixin conventions.
 ---
 
 # Grafana Jsonnet Refactor (Split Entrypoint + Lib)
@@ -27,6 +27,6 @@ description: Refactor a single, monolithic Grafana Jsonnet dashboard into a spli
    - confirm no duplicated configuration remains
 
 ## Examples
-- `references/example-before.jsonnet`
-- `references/example-after-dashboard.jsonnet`
-- `references/example-after-lib.libsonnet`
+- `examples/example-before.jsonnet`
+- `examples/example-after-dashboard.jsonnet`
+- `examples/example-after-lib.libsonnet`

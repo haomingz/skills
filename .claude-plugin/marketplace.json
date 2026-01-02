@@ -4,13 +4,13 @@
     "name": "haoming"
   },
   "metadata": {
-    "description": "Grafana Jsonnet workflows and reporting skills catalog.",
+    "description": "Personal skills catalog for automation and development workflows.",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "grafana-skills",
-      "description": "Grafana Jsonnet conversion, refactor, and report migration skills.",
+      "description": "Skills for Grafana dashboard development and automation workflows.",
       "source": "./",
       "strict": false,
       "skills": [
