@@ -16,7 +16,8 @@
       "skills": [
         "./skills/grafana-json-to-jsonnet",
         "./skills/grafana-jsonnet-refactor",
-        "./skills/grafana-report-to-dashboard"
+        "./skills/grafana-report-to-dashboard",
+        "./skills/grafana-dashboard-optimize"
       ]
     }
   ]
