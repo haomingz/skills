@@ -7,12 +7,14 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 - [Critical requirements](#critical-requirements)
 - [Conversion philosophy](#conversion-philosophy)
 - [Step 1: Review conventions](#step-1-review-conventions)
-- [Step 2: Analyze the export JSON](#step-2-analyze-the-export-json)
+- [Step 2: Analyze the export JSON and create inventory](#step-2-analyze-the-export-json-and-create-inventory)
 - [Step 3: Build a single self-contained Jsonnet file](#step-3-build-a-single-self-contained-jsonnet-file)
-- [Step 4: Modernize legacy configurations](#step-4-modernize-legacy-configurations)
-- [Step 5: Handle complex configurations](#step-5-handle-complex-configurations)
-- [Step 6: Add manual import support](#step-6-add-manual-import-support)
-- [Step 7: Compile and verify](#step-7-compile-and-verify)
+  - [Variables with validation checkpoint](#35-variable-configurations)
+  - [Row structure and panel organization](#36-row-structure-and-panel-organization)
+- [Step 4: Compile and fix build errors](#step-4-compile-and-fix-build-errors)
+- [Step 5: Verify completeness with scripts](#step-5-verify-completeness-with-scripts)
+- [Step 6: Visual verification in Grafana](#step-6-visual-verification-in-grafana)
+- [Step 7: Final optimization](#step-7-final-optimization)
 - [Quality checklist](#quality-checklist)
 
 ---
@@ -38,11 +40,48 @@ Read:
 - `references/best-practices.md`
 - `references/lib-api-reference.md`
 
-## Step 2: Analyze the export JSON
+## Step 2: Analyze the export JSON and create inventory
 
-Identify:
+**CRITICAL: Count all elements before conversion to ensure completeness.**
+
+Run these commands to create an inventory:
+
+```bash
+# Total panels (including those in rows)
+echo "Total panels (including in rows):"
+jq '[.panels[] | if .type == "row" then (.panels // [])[] else . end] | length' input.json
+
+# Top-level panels only
+echo "Top-level panels:"
+jq '.panels | length' input.json
+
+# Rows count
+echo "Rows:"
+jq '[.panels[] | select(.type == "row")] | length' input.json
+
+# List all row titles
+echo "Row titles:"
+jq -r '.panels[] | select(.type == "row") | .title' input.json
+
+# Variables count
+echo "Variables:"
+jq '.templating.list | length' input.json
+
+# List all variable names
+echo "Variable names:"
+jq -r '.templating.list[].name' input.json
+
+# Datasources used
+echo "Datasources:"
+jq -r '.panels[].datasource.type' input.json | sort -u
+```
+
+Save this inventory for verification after conversion.
+
+Identify for conversion:
 - Panel types (stat, timeseries, table, etc.)
 - Variables and templating configuration
+- Row structure and which panels belong to each row
 - Datasource types and UIDs
 - Legacy configs that should be modernized
 - Complex queries that can use `prom.*` helpers
@@ -198,18 +237,202 @@ local environmentVariable = g.dashboard.variable.query.new(
 + g.dashboard.variable.query.refresh.onLoad();
 ```
 
-## Step 4: Integrate and verify
+**Validation checkpoint:** After converting variables, verify count:
+```bash
+# Count variables in source JSON
+SOURCE_VARS=$(jq '.templating.list | length' input.json)
 
-- Place the single `<dashboard>.jsonnet` file under `mixin/<system>/`.
-- Build with `mixin/build.sh` or `mixin/build.ps1`.
-- Fix errors using `references/common-issues.md`.
+# Count variables in Jsonnet
+JSONNET_VARS=$(grep -c "g.dashboard.variable" output.jsonnet)
 
-Common errors:
-- `Field does not exist: percent` -> use `percent01` or `percent100`
-- `Field does not exist: rich` -> use `standard/compact/detailed/hidden`
-- `max stack frames exceeded` -> use `+` and `super` instead of `self`
+echo "Source: $SOURCE_VARS, Jsonnet: $JSONNET_VARS"
+# Must match
+```
 
-## Step 5: Test and optimize
+### 3.6 Row structure and panel organization
+
+**CRITICAL: Rows organize panels in Grafana dashboards. Always preserve row structure.**
+
+Extract row information from source JSON:
+```bash
+# List all rows with their collapsed state
+jq -r '.panels[] | select(.type == "row") | "\(.title) - collapsed: \(.collapsed)"' input.json
+
+# For each row, list panels that belong to it
+jq -r '.panels[] | select(.type == "row") | .title' input.json | while read row; do
+  echo "Row: $row"
+  # Panels in rows are stored in the row's panels array in older Grafana
+  # Or they follow the row with matching gridPos.y in newer Grafana
+done
+```
+
+Convert rows to Jsonnet:
+```jsonnet
+// Create row objects
+local overviewRow = g.dashboard.row.new('Overview')
++ g.dashboard.row.withCollapsed(false)
++ g.dashboard.row.gridPos.withY(0);
+
+local metricsRow = g.dashboard.row.new('Metrics')
++ g.dashboard.row.withCollapsed(false)
++ g.dashboard.row.gridPos.withY(5);
+
+// Panels at Y=0 belong to overviewRow
+local panel1 = panels.statPanel(...)
++ g.panel.stat.gridPos.withY(0)  // Same Y as overviewRow
++ g.panel.stat.gridPos.withX(0)
++ g.panel.stat.gridPos.withH(4)
++ g.panel.stat.gridPos.withW(6);
+
+local panel2 = panels.statPanel(...)
++ g.panel.stat.gridPos.withY(0)  // Same Y as overviewRow
++ g.panel.stat.gridPos.withX(6)
++ g.panel.stat.gridPos.withH(4)
++ g.panel.stat.gridPos.withW(6);
+
+// Panels at Y=5 belong to metricsRow
+local panel3 = panels.timeseriesPanel(...)
++ g.panel.timeSeries.gridPos.withY(5)  // Same Y as metricsRow
++ g.panel.timeSeries.gridPos.withX(0)
++ g.panel.timeSeries.gridPos.withH(8)
++ g.panel.timeSeries.gridPos.withW(24);
+
+// Include rows and panels in correct order
+local allPanels = [
+  overviewRow,
+  panel1,
+  panel2,
+  metricsRow,
+  panel3,
+];
+```
+
+**Validation checkpoint:** After converting panels, verify count:
+```bash
+# Count total panels in source (including those in rows, excluding row objects themselves)
+SOURCE_PANELS=$(jq '[.panels[] | if .type == "row" then (.panels // [])[] else . end | select(.type != "row")] | length' input.json)
+
+# Count panel definitions in Jsonnet
+JSONNET_PANELS=$(grep -c "local .*Panel = panels\." output.jsonnet)
+
+echo "Source panels: $SOURCE_PANELS, Jsonnet panels: $JSONNET_PANELS"
+# Must match
+```
+
+## Step 4: Compile and fix build errors
+
+Place the single `<dashboard>.jsonnet` file under `mixin/<system>/` and compile:
+
+```bash
+cd mixin
+./build.sh   # or build.ps1 on Windows
+```
+
+Fix compilation errors. Common issues:
+- `Field does not exist: percent` -> use `standards.units.percent01` or `percent100`
+- `Field does not exist: rich` -> use `standards.legend.standard/compact/detailed/hidden`
+- `max stack frames exceeded` -> use `+` operator instead of recursive `self` references
+
+Consult `references/common-issues.md` for more error patterns.
+
+## Step 5: Verify completeness with scripts
+
+**CRITICAL: Run these validation scripts to ensure nothing is missing.**
+
+Create a validation script `verify-conversion.sh`:
+
+```bash
+#!/bin/bash
+
+INPUT_JSON="input-dashboard.json"
+OUTPUT_JSONNET="mixin/application/dashboard.jsonnet"
+
+echo "=== Conversion Completeness Verification ==="
+
+# 1. Panel count
+echo -e "\n1. Panel Count Verification:"
+SOURCE_PANELS=$(jq '[.panels[] | if .type == "row" then (.panels // [])[] else . end | select(.type != "row")] | length' $INPUT_JSON)
+JSONNET_PANELS=$(grep -c "local .*Panel = panels\." $OUTPUT_JSONNET)
+
+echo "Source panels: $SOURCE_PANELS"
+echo "Jsonnet panels: $JSONNET_PANELS"
+
+if [ "$SOURCE_PANELS" == "$JSONNET_PANELS" ]; then
+  echo "✓ Panel count matches"
+else
+  echo "✗ ERROR: Panel count mismatch! Missing $(($SOURCE_PANELS - $JSONNET_PANELS)) panels"
+  exit 1
+fi
+
+# 2. Variable count
+echo -e "\n2. Variable Verification:"
+SOURCE_VARS=$(jq '.templating.list | length' $INPUT_JSON)
+JSONNET_VARS=$(grep -c "g.dashboard.variable" $OUTPUT_JSONNET)
+
+echo "Source variables: $SOURCE_VARS"
+echo "Jsonnet variables: $JSONNET_VARS"
+
+if [ "$SOURCE_VARS" == "$JSONNET_VARS" ]; then
+  echo "✓ Variable count matches"
+else
+  echo "✗ ERROR: Variable count mismatch!"
+
+  # Show which variables are missing
+  echo "Source variables:"
+  jq -r '.templating.list[].name' $INPUT_JSON | sort
+
+  echo "Jsonnet variables:"
+  grep "g.dashboard.variable" $OUTPUT_JSONNET | grep -oP "'\K[^']+" | sort
+
+  exit 1
+fi
+
+# 3. Row structure
+echo -e "\n3. Row Structure Verification:"
+SOURCE_ROWS=$(jq '[.panels[] | select(.type == "row")] | length' $INPUT_JSON)
+JSONNET_ROWS=$(grep -c "g.dashboard.row.new" $OUTPUT_JSONNET)
+
+echo "Source rows: $SOURCE_ROWS"
+echo "Jsonnet rows: $JSONNET_ROWS"
+
+if [ "$SOURCE_ROWS" == "$JSONNET_ROWS" ]; then
+  echo "✓ Row count matches"
+else
+  echo "✗ WARNING: Row count mismatch"
+  echo "Source row titles:"
+  jq -r '.panels[] | select(.type == "row") | .title' $INPUT_JSON
+fi
+
+echo -e "\n=== All validation checks passed! ==="
+```
+
+Run the verification:
+```bash
+chmod +x verify-conversion.sh
+./verify-conversion.sh
+```
+
+**If verification fails:**
+1. Note which elements are missing (panels, variables, or rows)
+2. Return to Step 3 and add the missing elements
+3. Recompile (Step 4)
+4. Run verification again (Step 5)
+
+Repeat until all checks pass.
+
+## Step 6: Visual verification in Grafana
+
+After automated checks pass, import the dashboard to Grafana and verify:
+
+1. **Panel count**: Should match source dashboard
+2. **Variables populate**: All dropdowns should have values
+3. **Row structure**: Panels should be organized in rows
+4. **No missing panels**: Compare side-by-side with source dashboard
+5. **Queries work**: All panels should display data
+
+If any issues are found, return to Step 3 and fix them.
+
+## Step 7: Final optimization
 
 - Import compiled JSON into Grafana and verify panels/variables.
 - Use reasonable refresh intervals (30s default).
