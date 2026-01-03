@@ -1,21 +1,23 @@
 ---
 name: grafana-json-to-jsonnet
-description: This skill should be used when converting Grafana dashboard JSON exports to Jsonnet that matches the grafana-code mixin style. Trigger phrases include "convert grafana json", "grafana export to jsonnet", "import grafana dashboard", "grafana-code integration", "json to jsonnet". CRITICAL REQUIREMENTS: (1) Fully convert to Jsonnet using unified libs, no raw JSON fallback. (2) Produce a single self-contained jsonnet file (no dashboard-specific lib files). (3) Modernize legacy panel types and options. (4) Only update `mixin/lib/*.libsonnet` for truly reusable components.
+description: Converts Grafana dashboard JSON exports to Jsonnet using grafana-code mixin conventions. Use when importing dashboards from Grafana UI exports, migrating to infrastructure-as-code, or integrating JSON dashboards into grafana-code. Produces self-contained Jsonnet files with unified libraries, modernizes legacy panel types, and supports manual import with datasource selection.
 ---
 
 # Grafana JSON Export to Jsonnet
 
-## When to use
+## When to use this skill
 
-- You are given a Grafana export JSON file and need to integrate it into `grafana-code`.
+This skill is most effective when:
+- Converting Grafana JSON exports (from UI: Share → Export) to Jsonnet
+- Migrating existing dashboards to infrastructure-as-code with grafana-code
+- Importing community dashboards into your mixin system
+- Standardizing dashboards to use unified libraries and conventions
+- Setting up manual import mode with datasource selection prompts
 
-## Trigger phrases (hints)
-
-- "convert grafana json"
-- "grafana export to jsonnet"
-- "import grafana dashboard"
-- "grafana-code integration"
-- "json to jsonnet"
+Not suitable for:
+- Refactoring existing Jsonnet dashboards (use `grafana-jsonnet-refactor`)
+- Content optimization or observability improvements (use `grafana-dashboard-optimize`)
+- Python report migration (use `grafana-report-to-dashboard`)
 
 ## Inputs
 

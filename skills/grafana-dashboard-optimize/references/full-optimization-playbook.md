@@ -2,6 +2,19 @@
 
 Use this document for the complete, detailed dashboard optimization workflow. It preserves the full guidance that was removed from the short SKILL.md.
 
+## Contents
+
+- [Purpose](#purpose)
+- [Target users](#target-users)
+- [Optimization framework](#optimization-framework)
+  - [Phase 1: Understanding (required)](#phase-1-understanding-required)
+  - [Phase 2: Seven-dimensional optimization](#phase-2-seven-dimensional-optimization)
+  - [Phase 3: Delivery format](#phase-3-delivery-format)
+- [Quality checklist (full)](#quality-checklist-full)
+- [References](#references)
+
+---
+
 ## Purpose
 
 This skill optimizes the content and observability quality of existing Grafana Jsonnet dashboards.

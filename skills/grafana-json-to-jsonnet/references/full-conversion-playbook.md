@@ -2,6 +2,21 @@
 
 Use this document for end-to-end conversion details, examples, and edge cases.
 
+## Contents
+
+- [Critical requirements](#critical-requirements)
+- [Conversion philosophy](#conversion-philosophy)
+- [Step 1: Review conventions](#step-1-review-conventions)
+- [Step 2: Analyze the export JSON](#step-2-analyze-the-export-json)
+- [Step 3: Build a single self-contained Jsonnet file](#step-3-build-a-single-self-contained-jsonnet-file)
+- [Step 4: Modernize legacy configurations](#step-4-modernize-legacy-configurations)
+- [Step 5: Handle complex configurations](#step-5-handle-complex-configurations)
+- [Step 6: Add manual import support](#step-6-add-manual-import-support)
+- [Step 7: Compile and verify](#step-7-compile-and-verify)
+- [Quality checklist](#quality-checklist)
+
+---
+
 ## Critical requirements
 
 1. Convert all panels, variables, and configurations to Jsonnet using unified libraries.

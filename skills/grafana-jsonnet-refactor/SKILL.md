@@ -1,21 +1,23 @@
 ---
 name: grafana-jsonnet-refactor
-description: Refactor Grafana Jsonnet dashboards to reduce duplication and align with grafana-code unified libraries while preserving behavior. Trigger phrases include "refactor jsonnet dashboard", "cleanup grafonnet", "deduplicate panels", "standardize grafana jsonnet". CRITICAL: Generate a single self-contained jsonnet file - do NOT create dashboard-specific lib files.
+description: Refactors Grafana Jsonnet dashboards to eliminate duplication and align with grafana-code unified libraries while preserving behavior. Use when dashboards contain duplicated code, inconsistent patterns, legacy panel types, or need standardization with mixin conventions. Produces single self-contained files without dashboard-specific libraries.
 ---
 
 # Grafana Jsonnet Refactor
 
-## When to use
+## When to use this skill
 
-- A dashboard is hard to maintain, duplicated, or inconsistent with grafana-code conventions.
-- You need to extract repeated patterns and standardize panels/queries.
+This skill is most effective when:
+- Dashboards contain duplicated panel definitions or query patterns
+- Code uses local helpers instead of grafana-code unified libraries
+- Legacy panel types (graph, singlestat) need modernization to timeseries/stat
+- Dashboard maintenance is difficult due to inconsistent patterns
+- Existing Jsonnet needs alignment with grafana-code conventions
 
-## Trigger phrases (hints)
-
-- "refactor jsonnet dashboard"
-- "cleanup grafonnet"
-- "deduplicate panels"
-- "standardize grafana jsonnet"
+Not suitable for:
+- Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`)
+- Content optimization or observability improvements (use `grafana-dashboard-optimize`)
+- Python report migration (use `grafana-report-to-dashboard`)
 
 ## Inputs
 

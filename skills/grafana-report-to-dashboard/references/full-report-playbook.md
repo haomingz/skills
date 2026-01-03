@@ -2,6 +2,20 @@
 
 Use this document to migrate Python report scripts into Grafana Jsonnet dashboards with ClickHouse and Elasticsearch support.
 
+## Contents
+
+- [Goals and constraints](#goals-and-constraints)
+- [Step 1: Analyze the report script](#step-1-analyze-the-report-script)
+- [Step 2: Define dashboard structure](#step-2-define-dashboard-structure)
+- [Step 3: Configure dual datasources](#step-3-configure-dual-datasources)
+- [Step 4: Convert queries](#step-4-convert-queries)
+- [Step 5: Build panels](#step-5-build-panels)
+- [Step 6: Preserve calculations](#step-6-preserve-calculations)
+- [Step 7: Compile and verify](#step-7-compile-and-verify)
+- [Quality checklist](#quality-checklist)
+
+---
+
 ## Goals and constraints
 
 - Preserve calculations and metric semantics from the report.

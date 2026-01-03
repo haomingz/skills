@@ -1,22 +1,23 @@
 ---
 name: grafana-report-to-dashboard
-description: Convert Python report scripts into Grafana Jsonnet dashboards with ClickHouse and Elasticsearch (ES7/ES8) support. Trigger phrases include "report to dashboard", "elasticsearch report", "clickhouse report", "python report to grafana", "email report migration".
+description: Converts Python report scripts (Elasticsearch queries + email output) into Grafana Jsonnet dashboards with dual-datasource support (ClickHouse + Elasticsearch ES7/ES8). Use when migrating scheduled email reports to real-time monitoring dashboards, building multi-datasource observability views, or converting report calculations to interactive panels.
 ---
 
 # Report Script to Grafana Jsonnet Dashboard
 
-## When to use
+## When to use this skill
 
-- You have a Python report script (ES queries + report output) and want a Grafana dashboard.
-- The dashboard must support ClickHouse and Elasticsearch (ES7/ES8) datasources.
+This skill is most effective when:
+- Converting Python email reports with Elasticsearch queries to Grafana dashboards
+- Migrating scheduled report scripts to real-time monitoring and alerting
+- Building dashboards requiring dual-datasource support (ClickHouse + ES7/ES8)
+- Preserving report calculations and metrics while transitioning to interactive visualization
+- Creating dashboards that support multiple backend datasources with explicit per-panel selection
 
-## Trigger phrases (hints)
-
-- "report to dashboard"
-- "elasticsearch report"
-- "clickhouse report"
-- "python report to grafana"
-- "email report migration"
+Not suitable for:
+- Standard dashboard creation (use `grafana-json-to-jsonnet` for JSON imports)
+- Refactoring existing Jsonnet (use `grafana-jsonnet-refactor`)
+- Single-datasource dashboards without report migration context
 
 ## Inputs
 

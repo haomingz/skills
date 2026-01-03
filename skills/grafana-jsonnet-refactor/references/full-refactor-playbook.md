@@ -2,6 +2,20 @@
 
 This playbook provides detailed steps and patterns for refactoring Grafana Jsonnet dashboards.
 
+## Contents
+
+- [Goals and constraints](#goals-and-constraints)
+- [Step 1: Audit the current dashboard](#step-1-audit-the-current-dashboard)
+- [Step 2: Decide the structure](#step-2-decide-the-structure)
+- [Step 3: Normalize config and selectors](#step-3-normalize-config-and-selectors)
+- [Step 4: Extract panel builders](#step-4-extract-panel-builders-if-splitting)
+- [Step 5: Refactor panels](#step-5-refactor-panels)
+- [Step 6: Modernize legacy types](#step-6-modernize-legacy-types)
+- [Step 7: Compile and verify](#step-7-compile-and-verify)
+- [Quality checks](#quality-checks)
+
+---
+
 ## Goals and constraints
 
 - Preserve metrics and layout behavior.

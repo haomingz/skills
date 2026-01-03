@@ -1,14 +1,23 @@
 ---
 name: grafana-dashboard-optimize
-description: This skill optimizes Grafana Jsonnet dashboard content for professional observability and SRE use. Trigger phrases include "optimize dashboard", "improve dashboard quality", "review dashboard observability", "enhance monitoring dashboard", "dashboard content audit". Use for content audits and improvements, not code refactoring.
+description: Optimizes Grafana Jsonnet dashboard content for observability and SRE best practices (RED/USE/Golden Signals). Use when auditing dashboard quality, improving monitoring effectiveness, enhancing diagnostic capabilities, or reviewing observability coverage. Focuses on content-level improvements without code structure refactoring.
 ---
 
 # Grafana Dashboard Content Optimization (Observability / SRE)
 
-## When to use
+## When to use this skill
 
-- You need a content-level review of a Grafana dashboard (semantics, coverage, clarity).
-- You want recommendations without changing the dashboard structure.
+This skill is most effective when:
+- Reviewing dashboard content quality and observability coverage
+- Improving diagnostic value and reducing cognitive load for on-call teams
+- Optimizing queries, metrics usage, and visualization effectiveness
+- Applying RED/USE/Golden Signals methodology to existing dashboards
+- Auditing panel semantics, layout flow, and troubleshooting effectiveness
+
+Not suitable for:
+- Code structure refactoring or lib abstraction (use `grafana-jsonnet-refactor`)
+- Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`)
+- Code style formatting or file organization
 
 ## Purpose
 
