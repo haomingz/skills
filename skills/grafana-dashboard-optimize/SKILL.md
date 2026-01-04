@@ -5,104 +5,119 @@ description: Optimizes Grafana Jsonnet dashboard content for observability and S
 
 # Grafana Dashboard Content Optimization (Observability / SRE)
 
-## When to use this skill
+Audit and optimize dashboard content for observability best practices. Apply RED/USE/Golden Signals methodology, improve diagnostic value, and reduce cognitive load for on-call teams.
 
-This skill is most effective when:
-- Reviewing dashboard content quality and observability coverage
-- Improving diagnostic value and reducing cognitive load for on-call teams
-- Optimizing queries, metrics usage, and visualization effectiveness
-- Applying RED/USE/Golden Signals methodology to existing dashboards
-- Auditing panel semantics, layout flow, and troubleshooting effectiveness
+**Not suitable for**: Code structure refactoring (use `grafana-jsonnet-refactor`), initial JSON conversion (use `grafana-json-to-jsonnet`), or code style formatting.
 
-Not suitable for:
-- Code structure refactoring or lib abstraction (use `grafana-jsonnet-refactor`)
-- Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`)
-- Code style formatting or file organization
+## Workflow with progress tracking
 
-## Purpose
+Copy this checklist and track your progress:
 
-What this skill does:
-- Improve usability for on-call and SRE audiences
-- Increase diagnostic value and reduce cognitive load
-- Optimize queries and metric usage
-- Apply RED / USE / Golden Signals best practices
+```
+Optimization Progress:
+- [ ] Step 1: Understand context (purpose, audience, strategy)
+- [ ] Step 2: Run seven-dimensional content audit
+- [ ] Step 3: Produce prioritized recommendations report
+- [ ] Step 4: Apply changes (if requested)
+- [ ] Step 5: Validate improvements
+```
 
-What this skill does not do:
-- Code structure refactoring (use `grafana-jsonnet-refactor`)
-- Lib abstraction or file organization
-- Code style formatting
+**Step 1: Understand context**
 
-## Target users
+Before any edits, document:
+- Dashboard purpose and target audience (SRE/on-call/management)
+- Current monitoring strategy and key questions it should answer
+- Datasources, variables, time range settings
+- Row structure and panel organization
 
-- On-call engineers and SRE teams
-- DevOps and infrastructure teams
-- Application development teams
-- Management dashboards for high-level health
+See `references/full-optimization-playbook.md` for detailed context gathering.
 
-## Inputs
+**Step 2: Run seven-dimensional content audit**
 
-- Path to an existing Grafana Jsonnet dashboard
-- Optional: dashboard purpose, audience, and key questions
-- Optional: known pain points or reliability goals
+Audit across these dimensions:
+1. **Panel semantics**: Missing/duplicated views, diagnostic coverage
+2. **Query optimization**: rate/increase usage, aggregation, cardinality
+3. **Variable design**: Names, defaults, cascading relationships
+4. **Visualization**: Panel types, units, thresholds, legends
+5. **Layout**: Overview → symptoms → root cause flow
+6. **Titles/descriptions**: Clarity, context, troubleshooting hints
+7. **Proactive additions**: SLO/SLI, annotations, comparisons, runbooks
 
-## Outputs
+For detailed audit checklist, see `references/optimization-checklist.md`.
+For observability strategies (RED/USE/Golden Signals), see `references/observability-strategies.md`.
 
-- Assessment report with prioritized recommendations (Critical / Recommended / Optional)
-- Jsonnet snippets for high-impact changes
-- Updated dashboard file if requested
+**Step 3: Produce prioritized recommendations**
 
-## Workflow
+Create structured assessment report with:
+- **Critical**: Missing essential metrics, broken queries, misleading visualizations
+- **Recommended**: Important improvements with clear ROI
+- **Optional**: Nice-to-have enhancements
 
-1. Understand context
-   - Identify purpose, audience, and monitoring strategy
-   - List datasources, variables, time range, and rows
-2. Run a content audit
-   - Panel semantics, queries, variables, visualization, layout, titles
-3. Produce recommendations
-   - Classify as Critical / Recommended / Optional
-   - Include rationale and expected impact
-4. Apply changes (if requested)
-   - Use unified libraries from `mixin/lib/` (`panels`, `standards`, `themes`, `layouts`)
-   - Keep structure changes minimal (no refactor)
-5. Validate
-   - Re-check queries, units, thresholds, legends, and row flow
+Include rationale and expected impact for each recommendation. Use template in `references/report-template.md`.
+
+**Step 4: Apply changes (if requested)**
+
+If user approves changes:
+- Use unified libraries from `mixin/lib/` (`panels`, `standards`, `themes`)
+- Keep code structure changes minimal (content-only optimization)
+- Include Jsonnet snippets for high-impact changes
+
+For query optimization patterns, see `references/query-optimization.md`.
+For visualization guidelines, see `references/visualization-guidelines.md`.
+For layout patterns, see `references/layout-guidelines.md`.
+
+**Step 5: Validate improvements**
+
+Re-check:
+- Queries are efficient and bounded
+- Units and thresholds use `standards.*`
+- Panel titles and descriptions are specific
+- Layout follows diagnostic flow
+- RED/USE/Golden Signals coverage is complete
+
+## Quick optimization checklist
+
+- [ ] RED/USE/Golden Signals coverage is complete
+- [ ] Queries are efficient and bounded
+- [ ] Units and thresholds use `standards.*`
+- [ ] Panel titles and descriptions are specific
+- [ ] Layout follows overview → symptoms → root cause
+
+## Assessment report format
+
+Use this structure for recommendations:
+
+```markdown
+# Dashboard Optimization Assessment
+
+## Overview
+- Purpose: [what this dashboard monitors]
+- Audience: [SRE/on-call/management]
+- Current state: [summary]
+
+## Critical Issues
+1. [Issue with rationale and impact]
+2. [Issue with rationale and impact]
+
+## Recommended Improvements
+1. [Improvement with expected benefit]
+2. [Improvement with expected benefit]
+
+## Optional Enhancements
+1. [Enhancement idea]
+2. [Enhancement idea]
+
+## Implementation Priority
+- Week 1: Critical issues
+- Week 2: Recommended improvements
+- Week 3+: Optional enhancements
+```
 
 ## Guardrails
 
 - Do not refactor code structure; use `grafana-jsonnet-refactor` for that.
 - Avoid broad rewrites; focus on content quality and observability value.
 - Keep deep guidance in `references/` instead of bloating this file.
-
-## Optimization framework (summary)
-
-- Phase 1: Understanding (required) - document purpose, audience, layout, and data flow before any edits.
-- Phase 2: Seven-dimensional audit - semantics, queries, variables, visualization, layout, titles, proactive additions.
-- Phase 3: Delivery - produce a structured assessment report with prioritized actions.
-
-## Seven core dimensions (summary)
-
-- Panel semantics and structure (missing/duplicated views, diagnostic coverage)
-- Query optimization and metric usage (rate/increase, aggregation, cardinality)
-- Variable design (names, defaults, cascading relationships)
-- Visualization and visual expression (panel type, units, thresholds, legends)
-- Layout and organization (overview -> symptoms -> root cause)
-- Titles and descriptions (clarity, context, troubleshooting hints)
-- Proactive additions (SLO/SLI, annotations, comparisons, runbooks)
-
-## Output format (recommended)
-
-- Overview: dashboard purpose and audience
-- Findings (Critical / Recommended / Optional)
-- Suggested changes with snippets
-- Expected impact and validation steps
-
-## Quick checklist
-
-- RED/USE/Golden Signals coverage is complete
-- Queries are efficient and bounded
-- Units and thresholds use `standards.*`
-- Panel titles and descriptions are specific
-- Layout follows overview -> symptoms -> root cause
 
 ## References (load as needed)
 

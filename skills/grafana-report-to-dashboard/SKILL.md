@@ -5,73 +5,50 @@ description: Converts Python report scripts (Elasticsearch queries + email outpu
 
 # Report Script to Grafana Jsonnet Dashboard
 
-## When to use this skill
+Migrate Python email reports (Elasticsearch queries) to real-time Grafana dashboards with dual-datasource support (ClickHouse + ES7/ES8). Preserve report calculations while enabling interactive visualization.
 
-This skill is most effective when:
-- Converting Python email reports with Elasticsearch queries to Grafana dashboards
-- Migrating scheduled report scripts to real-time monitoring and alerting
-- Building dashboards requiring dual-datasource support (ClickHouse + ES7/ES8)
-- Preserving report calculations and metrics while transitioning to interactive visualization
-- Creating dashboards that support multiple backend datasources with explicit per-panel selection
+**Not suitable for**: Standard dashboard creation (use `grafana-json-to-jsonnet` for JSON imports), refactoring existing Jsonnet (use `grafana-jsonnet-refactor`), or single-datasource dashboards.
 
-Not suitable for:
-- Standard dashboard creation (use `grafana-json-to-jsonnet` for JSON imports)
-- Refactoring existing Jsonnet (use `grafana-jsonnet-refactor`)
-- Single-datasource dashboards without report migration context
+## Workflow with progress tracking
 
-## Inputs
+Copy this checklist and track your progress:
 
-- Python report script (queries, post-processing, and email output)
-- Target mixin system folder
-- Datasource UIDs for ClickHouse and Elasticsearch
+```
+Migration Progress:
+- [ ] Step 1: Read datasource-mapping.md for ES/ClickHouse patterns
+- [ ] Step 2: Extract report metrics and logic
+- [ ] Step 3: Map report sections to panel types
+- [ ] Step 4: Define dual datasource configuration
+- [ ] Step 5: Implement panels with explicit datasource selection
+- [ ] Step 6: Compile and verify against report outputs
+```
 
-## Outputs
+**Step 1: Read datasource-mapping.md**
 
-- `<dashboard>.jsonnet` (single self-contained dashboard file)
-- Optionally: updates to `../lib/*.libsonnet` (only if adding truly reusable components to the general library)
-- Optional: `references/` files documenting query mappings
+Load `references/datasource-mapping.md` to understand Elasticsearch and ClickHouse query target patterns.
 
-## Critical requirements
+**Step 2: Extract report metrics and logic**
 
-- Single self-contained file; no dashboard-specific lib files in final output.
-- Preserve report calculations and metric semantics.
-- Support ClickHouse + Elasticsearch (ES7/ES8) with explicit datasource selection per panel.
-- Use unified libraries for panels and standard units/thresholds.
+From the Python script, identify:
+- Queries (ES aggregations, filters)
+- Time windows and date ranges
+- Post-processing calculations
+- Grouping and aggregations
+- Metric formulas
 
-## Report-to-panel mapping (quick)
+**Step 3: Map report sections to panel types**
 
-- Summary numbers -> `panels.statPanel`
-- Time trends -> `panels.timeseriesPanel`
-- Top-N rankings -> `panels.tablePanel`
-- Comparisons -> `panels.barGaugePanel` or timeseries with bars theme
+Use this mapping:
+- Summary numbers → `panels.statPanel`
+- Time trends → `panels.timeseriesPanel`
+- Top-N rankings → `panels.tablePanel`
+- Comparisons → `panels.barGaugePanel` or timeseries with bars theme
 
-## Workflow
+For detailed mapping examples, see `references/report-migration-guide.md`.
 
-1. Read `references/datasource-mapping.md` for Elasticsearch and ClickHouse target patterns.
-2. Extract report metrics and logic (queries, filters, time windows, aggregations, post-processing).
-3. Map report sections to panels (stat, timeseries, table).
-4. Define dual datasource config (`config.datasources.elasticsearch` and `config.datasources.clickhouse`).
-5. Implement panels with unified libs and explicit datasource selection in the single file.
-6. Compile and verify against the report outputs.
+**Step 4: Define dual datasource configuration**
 
-## Guardrails
-
-- Keep calculations consistent with the original report.
-- Keep datasources explicit per panel.
-- Avoid adding dashboard-specific code to global libs.
-
-## Quality checks
-
-- Build succeeds (`mixin/build.sh` or `mixin/build.ps1`).
-- Panel results match the report for a known time window.
-- ES7/ES8 and ClickHouse queries return data in Grafana.
-
-## Manual import support (recommended)
-
-- Use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` in manual import mode.
-- Add `__inputs` and `__requires` so Grafana can prompt for datasources.
-
-## Dual datasource snippet
+Create config with both datasources:
 
 ```jsonnet
 local config = {
@@ -83,18 +60,74 @@ local config = {
 };
 ```
 
-## Required references
+For manual import mode, use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` variables.
 
-- `references/datasource-mapping.md`
-- `references/report-migration-guide.md`
+**Step 5: Implement panels**
 
-## Optional MCP usage
+Implement each panel using unified libraries. Select datasource explicitly per panel. Preserve report calculations and metric semantics.
 
-- Context7: Grafana/Grafonnet APIs when a query target or panel option is unclear.
-- Exa: datasource plugin docs for ES7/ES8 or ClickHouse target fields.
+**Step 6: Compile and verify**
+
+Run `mixin/build.sh` or `mixin/build.ps1`. Verify panel results match the report for a known time window. Test both ES7/ES8 and ClickHouse queries in Grafana.
+
+## Panel type quick reference
+
+- Summary numbers → `panels.statPanel`
+- Time trends → `panels.timeseriesPanel`
+- Top-N rankings → `panels.tablePanel`
+- Comparisons → `panels.barGaugePanel` or timeseries with bars theme
+
+## Quality checks
+
+- Build succeeds (`mixin/build.sh` or `mixin/build.ps1`).
+- Panel results match the report for a known time window.
+- ES7/ES8 and ClickHouse queries return data in Grafana.
+
+## Manual import support
+
+- Use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` in manual import mode.
+- Add `__inputs` and `__requires` so Grafana can prompt for datasources.
+
+## Dual datasource example
+
+```jsonnet
+local ES_UID = 'elasticsearch-prod';
+// local ES_UID = '${DS_ELASTICSEARCH}';
+
+local CH_UID = 'clickhouse-prod';
+// local CH_UID = '${DS_CLICKHOUSE}';
+
+local config = {
+  datasources: {
+    elasticsearch: { type: 'elasticsearch', uid: ES_UID },
+    clickhouse: { type: 'grafana-clickhouse-datasource', uid: CH_UID },
+  },
+  pluginVersion: '12.3.0',
+};
+
+// Panel using Elasticsearch
+local errorCountPanel = panels.statPanel(
+  title='Error Count',
+  targets=[/* ES query */],
+  datasource=config.datasources.elasticsearch,
+  unit=standards.units.short,
+  pluginVersion=config.pluginVersion
+);
+
+// Panel using ClickHouse
+local requestsPanel = panels.timeseriesPanel(
+  title='Requests',
+  targets=[/* ClickHouse query */],
+  datasource=config.datasources.clickhouse,
+  unit=standards.units.qps,
+  pluginVersion=config.pluginVersion
+);
+```
 
 ## References (load as needed)
 
+- `references/datasource-mapping.md`
+- `references/report-migration-guide.md`
 - `references/full-report-playbook.md`
 - `references/example-report.py`
 - `references/example-dashboard.jsonnet`

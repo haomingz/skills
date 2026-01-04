@@ -5,52 +5,61 @@ description: Refactors Grafana Jsonnet dashboards to eliminate duplication and a
 
 # Grafana Jsonnet Refactor
 
-## When to use this skill
+Eliminate duplication and align existing Jsonnet dashboards with grafana-code unified libraries. Preserve behavior while modernizing legacy panels and standardizing patterns.
 
-This skill is most effective when:
-- Dashboards contain duplicated panel definitions or query patterns
-- Code uses local helpers instead of grafana-code unified libraries
-- Legacy panel types (graph, singlestat) need modernization to timeseries/stat
-- Dashboard maintenance is difficult due to inconsistent patterns
-- Existing Jsonnet needs alignment with grafana-code conventions
+**Not suitable for**: Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`), content optimization (use `grafana-dashboard-optimize`), or Python report migration (use `grafana-report-to-dashboard`).
 
-Not suitable for:
-- Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`)
-- Content optimization or observability improvements (use `grafana-dashboard-optimize`)
-- Python report migration (use `grafana-report-to-dashboard`)
+## Workflow with progress tracking
 
-## Inputs
+Copy this checklist and track your progress:
 
-- Path to an existing Jsonnet dashboard
-- Target system folder (for example `mixin/application`)
+```
+Refactor Progress:
+- [ ] Step 1: Read refactor-checklist.md and align with conventions
+- [ ] Step 2: Audit dashboard (panels, variables, datasources, patterns)
+- [ ] Step 3: Choose refactor mode (direct/wrapper/hybrid)
+- [ ] Step 4: Normalize config and shared selectors
+- [ ] Step 5: Replace panels with unified constructors
+- [ ] Step 6: Organize file structure (imports → config → variables → panels → dashboard)
+- [ ] Step 7: Compile and verify in Grafana
+```
 
-## Outputs
+**Step 1: Read refactor-checklist.md**
 
-- `<dashboard>.jsonnet` (single self-contained dashboard file, refactored and cleaned)
-- Optional updates to `../lib/*.libsonnet` (only if adding truly reusable components)
+Load `references/refactor-checklist.md` to understand grafana-code conventions and standards.
 
-## Critical requirements
+**Step 2: Audit the dashboard**
 
-- Preserve metric semantics and layout intent.
-- Replace local helpers with unified libraries (`panels.*`, `prom.*`, `standards.*`, `themes.*`).
-- Modernize legacy panels (`graph` -> `timeseries`, `singlestat` -> `stat`).
-- Keep dashboard-specific code out of global libs.
+List all panels, variables, datasources, and identify repeated patterns. Note which panels use local helpers vs unified libraries.
 
-## Refactor modes (choose one)
+**Step 3: Choose refactor mode**
 
-- Direct migration: remove helpers and use unified libs directly (small dashboards).
-- Wrapper pattern: keep helper signatures, but call unified libs internally (large dashboards).
-- Hybrid: mix direct + wrappers only where needed.
+Select approach based on dashboard size:
+- **Direct migration**: Remove helpers, use unified libs directly (recommended for small dashboards)
+- **Wrapper pattern**: Keep helper signatures, call unified libs internally (for large dashboards with many callsites)
+- **Hybrid**: Mix approaches where needed
 
-## Workflow
+**Step 4: Normalize config and shared selectors**
 
-1. Read `references/refactor-checklist.md` to align with grafana-code conventions.
-2. Audit the dashboard: list panels, variables, datasources, and repeated patterns.
-3. Choose a refactor mode (direct / wrapper / hybrid).
-4. Normalize `config` and shared selectors.
-5. Replace panels with unified constructors and remove duplicated helpers.
-6. Keep the file organized: imports -> config -> variables -> panels -> dashboard.
-7. Compile and verify in Grafana.
+Extract common configuration (datasource, pluginVersion, timezone) into a `config` object.
+
+**Step 5: Replace panels with unified constructors**
+
+Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds. Remove duplicated helper functions.
+
+**Step 6: Organize file structure**
+
+Structure the file: imports → config → variables → panels → dashboard. Keep all panel definitions as `local` variables in the single file.
+
+**Step 7: Compile and verify**
+
+Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count and layout match the original dashboard in Grafana.
+
+## Refactor modes (quick reference)
+
+- **Direct migration**: Remove helpers and use unified libs directly (small dashboards)
+- **Wrapper pattern**: Keep helper signatures, but call unified libs internally (large dashboards)
+- **Hybrid**: Mix direct + wrappers only where needed
 
 ## Guardrails
 

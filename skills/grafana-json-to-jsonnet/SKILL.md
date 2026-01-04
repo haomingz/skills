@@ -5,44 +5,9 @@ description: Converts Grafana dashboard JSON exports to Jsonnet using grafana-co
 
 # Grafana JSON Export to Jsonnet
 
-## When to use this skill
+Convert Grafana JSON exports (UI: Share → Export) to Jsonnet using grafana-code unified libraries. Produce a single self-contained file, modernize legacy panels, and preserve row structure.
 
-This skill is most effective when:
-- Converting Grafana JSON exports (from UI: Share → Export) to Jsonnet
-- Migrating existing dashboards to infrastructure-as-code with grafana-code
-- Importing community dashboards into your mixin system
-- Standardizing dashboards to use unified libraries and conventions
-- Setting up manual import mode with datasource selection prompts
-
-Not suitable for:
-- Refactoring existing Jsonnet dashboards (use `grafana-jsonnet-refactor`)
-- Content optimization or observability improvements (use `grafana-dashboard-optimize`)
-- Python report migration (use `grafana-report-to-dashboard`)
-
-## Inputs
-
-- Grafana export JSON file (Grafana UI: Share -> Export)
-- Target mixin system folder (for example `mixin/application`)
-- Datasource type and UID (for example `prometheus` + `prometheus-thanos`)
-
-## Outputs
-
-- `<output>/<dashboard>.jsonnet` (single self-contained dashboard file)
-- Optional updates to `mixin/lib/*.libsonnet` (only for reusable components)
-
-## Critical requirements
-
-1. Convert all panels, variables, and configs to Jsonnet using unified libraries.
-2. Produce a single self-contained Jsonnet file (no dashboard-specific lib files).
-3. Modernize legacy panel types and deprecated options.
-4. Only update `mixin/lib/*.libsonnet` for truly reusable components.
-
-## Non-negotiable rules
-
-- All panel definitions live as `local` variables in the main file.
-- No raw JSON fallback files in final output.
-- Use unified constructors first, then layer Grafonnet `.with*()` for advanced options.
-- Use latest Grafana features when modern equivalents exist.
+**Not suitable for**: Refactoring existing Jsonnet (use `grafana-jsonnet-refactor`), content optimization (use `grafana-dashboard-optimize`), or Python report migration (use `grafana-report-to-dashboard`).
 
 ## Workflow with validation
 
@@ -73,7 +38,7 @@ Create `g.dashboard.row.new()` for each row in the source JSON. Preserve collaps
 
 **Step 4: Convert panels and assign to rows**
 
-Convert panels with unified constructors (`panels.*`). Use `gridPos.withY()` to assign panels to rows.
+Convert panels with unified constructors (`panels.*Panel()`). Use `gridPos.withY()` to assign panels to rows.
 
 **Step 5: Compile and fix build errors**
 
@@ -87,14 +52,14 @@ Run verification checks from `references/verification-guide.md`. Ensure panel co
 
 If verification fails, return to the appropriate step, add missing elements, recompile, and verify again.
 
-## Modernization guidelines (short)
+## Modernization guidelines
 
 - `graph` -> `timeseries`
 - `singlestat` -> `stat`
 - Prefer `standards.legend.*` and `themes.timeseries.*`
 - Use newer tooltip modes and legend placements
 
-## Manual import support (recommended)
+## Manual import support
 
 - Use `${DS_*}` for datasource UID in manual import mode.
 - Add `__inputs` and `__requires` so Grafana can prompt for datasources.
@@ -162,7 +127,7 @@ g.dashboard.new('Dashboard Name')
 Use it only as a scratchpad: inline all panels and variables into the single file and delete raw JSON files.
 
 Example:
-```
+```bash
 python scripts/convert_grafana_json.py \
   --input <export.json> \
   --output-dir <mixin/system> \
@@ -214,3 +179,4 @@ Required checks:
 - `references/output-dashboard.jsonnet`
 - `references/output-panels.libsonnet`
 - `references/output-raw-variables.json`
+- `references/verification-guide.md`
