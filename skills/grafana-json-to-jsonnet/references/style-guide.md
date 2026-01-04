@@ -7,16 +7,19 @@ Use this checklist when generating or refactoring dashboards.
 1. Grafonnet main library
 2. Unified libraries (alphabetical)
 3. Config constants
-4. Local helpers
-5. Variables
+4. Constants
+5. Local helpers
 6. Panels
-7. Dashboard assembly
+7. Rows
+8. Variables
+9. Dashboard assembly
 
 ## Config Block
 
 Use the same pattern as `grafana-code/mixin`:
 
 ```
+// Provisioning mode (real UID). For manual import, switch to ${DS_*}.
 local DATASOURCE_UID = 'prometheus-thanos';
 // local DATASOURCE_UID = '${DS_PROMETHEUS}';
 
@@ -33,7 +36,23 @@ local config = {
 
 - Use `panels.*` constructors from `mixin/lib/panels.libsonnet`.
 - Use `standards.units.*`, `standards.thresholds.*`, and `standards.legend.*`.
-- Apply layout via `g.panel.*.gridPos.withH/W/X/Y`.
+- Apply layout via `layouts.*` and `panels.withIdAndPatches(...)` or `g.panel.*.gridPos.withH/W/X/Y`.
+
+## Row Construction
+
+- Build rows with `panels.rowPanel(...)` or `g.panel.row.new(...)`.
+- Attach panels via `g.panel.row.withPanels([...])`.
+- Keep panel `gridPos.y` aligned with row `gridPos.y`.
+
+## Dashboard Metadata
+
+- Add `__inputs` / `__requires` when manual import is supported.
+- Keep `pluginVersion` consistent across panels and `__requires`.
+- Preserve `annotations` from the source JSON.
+
+## Formatting
+
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Naming
 

@@ -10,15 +10,15 @@ Use this guide to refactor a Grafana Jsonnet dashboard while keeping behavior st
 
 ## Decide the structure
 
-- Keep a single file if the dashboard is small and has minimal repetition.
-- Split into entrypoint + `lib/<dashboard>_panels.libsonnet` if there are many panels, repeated patterns, or shared selectors.
+- Keep a single file and use local helpers for repeated patterns.
+- Only update `mixin/lib/*.libsonnet` when a pattern is truly reusable across dashboards.
 
 ## Recommended steps
 
 1. Inventory panels, variables, datasources, and repeated configs.
 2. Normalize datasource config and common selectors.
-3. Extract panel builders and shared helpers into lib when needed.
-4. Replace raw Grafonnet blocks with unified constructors.
+3. Replace raw Grafonnet blocks with unified constructors.
+4. Group panels into rows with `panels.rowPanel(...)` or `g.panel.row.new(...)`.
 5. Compile and verify (`mixin/build.sh` or `mixin/build.ps1`).
 
 ## Common refactor moves
@@ -26,4 +26,5 @@ Use this guide to refactor a Grafana Jsonnet dashboard while keeping behavior st
 - Consolidate duplicated selectors into `local baseSelector`.
 - Replace handwritten PromQL with `prom.*` helpers.
 - Standardize units and thresholds via `standards.*`.
-- Move repeated panel options into shared helpers (lib) if splitting.
+- Move repeated panel options into local helpers, or into `mixin/lib/*.libsonnet` if globally reusable.
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.

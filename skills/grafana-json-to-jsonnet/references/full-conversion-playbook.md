@@ -25,6 +25,7 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 2. Generate a single self-contained Jsonnet file (no dashboard-specific lib files).
 3. Modernize legacy panel types and deprecated options.
 4. Only modify `mixin/lib/*.libsonnet` for truly reusable components.
+5. Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Conversion philosophy
 
@@ -103,8 +104,9 @@ local standards = import '../lib/standards.libsonnet';
 local themes = import '../lib/themes.libsonnet';
 
 // 3) Datasource configuration (dual-mode support)
-local DATASOURCE_UID = 'prometheus-thanos';  // provisioning mode
-// local DATASOURCE_UID = '${DS_PROMETHEUS}'; // manual import mode
+// Provisioning mode (real UID). For manual import, switch to ${DS_*}.
+local DATASOURCE_UID = 'prometheus-thanos';
+// local DATASOURCE_UID = '${DS_PROMETHEUS}';
 
 local config = {
   datasource: { type: 'prometheus', uid: DATASOURCE_UID },
@@ -114,22 +116,10 @@ local config = {
   pluginVersion: '12.3.0',
 };
 
-// 4) Common selectors (optional)
+// 4) Constants / selectors (optional)
 local baseSelector = '{job="api",env="prod"}';
 
-// 5) Variables
-local hostnameVariable = g.dashboard.variable.query.new(
-  'hostname',
-  'label_values(up, hostname)'
-)
-+ g.dashboard.variable.query.withDatasource(
-  type=config.datasource.type,
-  uid=config.datasource.uid
-)
-+ g.dashboard.variable.query.selectionOptions.withIncludeAll(true)
-+ g.dashboard.variable.query.refresh.onLoad();
-
-// 6) Panels (all panels defined here)
+// 5) Panels (all panels defined here)
 local qpsStat = panels.statPanel(
   title='QPS',
   targets=[prom.instantTarget('sum(rate(http_requests_total[1m]))', '')],
@@ -141,7 +131,24 @@ local qpsStat = panels.statPanel(
 + g.panel.stat.gridPos.withH(layouts.stat.height)
 + g.panel.stat.gridPos.withW(layouts.stat.width);
 
-// 7) Annotations (optional)
+// 6) Rows
+local overviewRow = panels.rowPanel('Overview', collapsed=true)
++ g.panel.row.gridPos.withY(0)
++ g.panel.row.withPanels([qpsStat]);
+
+// 7) Variables
+local hostnameVariable = g.dashboard.variable.query.new(
+  'hostname',
+  'label_values(up, hostname)'
+)
++ g.dashboard.variable.query.withDatasource(
+  type=config.datasource.type,
+  uid=config.datasource.uid
+)
++ g.dashboard.variable.query.selectionOptions.withIncludeAll(true)
++ g.dashboard.variable.query.refresh.onLoad();
+
+// 8) Annotations (optional)
 local annotationsObj = {
   list: [
     {
@@ -156,16 +163,16 @@ local annotationsObj = {
   ],
 };
 
-// 8) Dashboard assembly
+// 9) Dashboard assembly
 local baseDashboard = g.dashboard.new('Dashboard Name')
 + g.dashboard.withUid('dashboard-uid')
 + g.dashboard.withTimezone(config.timezone)
 + g.dashboard.time.withFrom(config.timeFrom)
 + g.dashboard.time.withTo(config.timeTo)
 + g.dashboard.withVariables([hostnameVariable])
-+ g.dashboard.withPanels([qpsStat]);
++ g.dashboard.withPanels([overviewRow]);
 
-// 9) Final export with metadata (manual import supported)
+// 10) Final export with metadata (manual import supported)
 baseDashboard {
   annotations: annotationsObj,
   schemaVersion: 42,
@@ -269,13 +276,13 @@ done
 Convert rows to Jsonnet:
 ```jsonnet
 // Create row objects
-local overviewRow = g.dashboard.row.new('Overview')
-+ g.dashboard.row.withCollapsed(false)
-+ g.dashboard.row.gridPos.withY(0);
+local overviewRow = panels.rowPanel('Overview', collapsed=false)
++ g.panel.row.gridPos.withY(0)
++ g.panel.row.withPanels([panel1, panel2]);
 
-local metricsRow = g.dashboard.row.new('Metrics')
-+ g.dashboard.row.withCollapsed(false)
-+ g.dashboard.row.gridPos.withY(5);
+local metricsRow = panels.rowPanel('Metrics', collapsed=false)
++ g.panel.row.gridPos.withY(5)
++ g.panel.row.withPanels([panel3]);
 
 // Panels at Y=0 belong to overviewRow
 local panel1 = panels.statPanel(...)
@@ -297,13 +304,10 @@ local panel3 = panels.timeseriesPanel(...)
 + g.panel.timeSeries.gridPos.withH(8)
 + g.panel.timeSeries.gridPos.withW(24);
 
-// Include rows and panels in correct order
+// Include rows in correct order
 local allPanels = [
   overviewRow,
-  panel1,
-  panel2,
   metricsRow,
-  panel3,
 ];
 ```
 
@@ -390,7 +394,7 @@ fi
 # 3. Row structure
 echo -e "\n3. Row Structure Verification:"
 SOURCE_ROWS=$(jq '[.panels[] | select(.type == "row")] | length' $INPUT_JSON)
-JSONNET_ROWS=$(grep -c "g.dashboard.row.new" $OUTPUT_JSONNET)
+JSONNET_ROWS=$(rg -c "panels\\.rowPanel\\(|g\\.panel\\.row\\.new|type: 'row'" $OUTPUT_JSONNET)
 
 echo "Source rows: $SOURCE_ROWS"
 echo "Jsonnet rows: $JSONNET_ROWS"

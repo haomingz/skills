@@ -34,11 +34,11 @@ Convert all variables with `g.dashboard.variable.*` constructors. After conversi
 
 **Step 3: Convert rows**
 
-Create `g.dashboard.row.new()` for each row in the source JSON. Preserve collapsed state.
+Create rows with `panels.rowPanel()` or `g.panel.row.new()` and keep `collapsed` + `gridPos` aligned to the source JSON.
 
 **Step 4: Convert panels and assign to rows**
 
-Convert panels with unified constructors (`panels.*Panel()`). Use `gridPos.withY()` to assign panels to rows.
+Convert panels with unified constructors (`panels.*Panel()`). Add `id` and `gridPos` via `panels.withIdAndPatches(...)` or `+ { id, gridPos }`. Set each panel's `gridPos.y` to its row `gridPos.y` and keep the original `x/w/h` unless standardizing with `layouts.*`.
 
 **Step 5: Compile and fix build errors**
 
@@ -74,8 +74,9 @@ Panels belong to a row based on `gridPos.y` coordinate. Set each panel's Y to ma
 **Example:**
 ```jsonnet
 // Row at Y=0
-local overviewRow = g.dashboard.row.new('Overview')
-+ g.dashboard.row.gridPos.withY(0);
+local overviewRow = panels.rowPanel('Overview', collapsed=true)
++ g.panel.row.gridPos.withY(0)
++ g.panel.row.withPanels([panel1, panel2]);
 
 // Panels at Y=0 belong to overviewRow
 local panel1 = panels.statPanel(...)
@@ -88,11 +89,14 @@ For detailed row handling, see `references/full-conversion-playbook.md` section 
 
 ```jsonnet
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local helpers = import '../lib/helpers.libsonnet';
+local layouts = import '../lib/layouts.libsonnet';
 local panels = import '../lib/panels.libsonnet';
 local prom = import '../lib/prometheus.libsonnet';
 local standards = import '../lib/standards.libsonnet';
 local themes = import '../lib/themes.libsonnet';
 
+// Provisioning mode (real UID). For manual import, switch to ${DS_*}.
 local DATASOURCE_UID = 'prometheus-thanos';
 // local DATASOURCE_UID = '${DS_PROMETHEUS}';
 
@@ -165,6 +169,10 @@ Required checks:
 - [ ] Variables populate with data when dashboard is imported
 - [ ] No panels missing compared to source dashboard
 - [ ] Build succeeds without errors
+
+## Formatting guardrail
+
+- Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files. Keep formatting manual and consistent with grafana-code mixin style.
 
 ## References (load as needed)
 

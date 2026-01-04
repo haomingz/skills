@@ -2,9 +2,9 @@
 
 ## Structure
 
-- Entrypoint contains imports, config, variables, and dashboard assembly only.
-- Use entrypoint + lib when there are repeated patterns or many panels.
-- Keep single-file dashboards if changes would add unnecessary complexity.
+- Keep a single self-contained file with local helpers.
+- Structure the file: imports → config → constants → helpers → panels → rows → variables → dashboard.
+- Avoid dashboard-specific lib files; only update `mixin/lib/*.libsonnet` for reusable patterns.
 
 ## Unified libraries
 
@@ -23,6 +23,7 @@
 
 - Preserve row order and collapsed state.
 - Preserve gridPos (`H/W/X/Y`) and adjust only when needed.
+- Use `panels.rowPanel(...)` or `g.panel.row.new(...)` with `g.panel.row.withPanels([...])`.
 
 ## Cleanups
 
@@ -35,3 +36,5 @@
 - `mixin/build.sh` or `mixin/build.ps1` succeeds.
 - Panel behavior matches the original dashboard.
 - No raw JSON blobs remain.
+- `__inputs` / `__requires` are present when manual import is supported.
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.

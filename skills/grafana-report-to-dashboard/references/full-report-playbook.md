@@ -21,6 +21,8 @@ Use this document to migrate Python report scripts into Grafana Jsonnet dashboar
 - Preserve calculations and metric semantics from the report.
 - Support both Elasticsearch (ES7/ES8) and ClickHouse.
 - Keep the dashboard structure readable and maintainable.
+- Keep a single Jsonnet file with local helpers (no dashboard-specific libs).
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Step 1: Analyze the report script
 
@@ -177,6 +179,7 @@ local topErrors = panels.tablePanel(
 - Include variables for environment, service, or cluster if the report uses them.
 - Preserve time range defaults from the report.
 - Keep tags and descriptions aligned with the report purpose.
+- Add `__inputs` / `__requires` when manual import is supported.
 
 ## Step 7: Validate
 
@@ -190,3 +193,4 @@ local topErrors = panels.tablePanel(
 - Changing aggregation logic while simplifying queries.
 - Losing report context (labels, section titles, or ordering).
 - Ignoring Python post-processing logic that affects results.
+- Creating dashboard-specific lib files instead of local helpers.

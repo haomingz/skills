@@ -30,6 +30,9 @@ What this skill does not do:
 - Code structure refactoring (use `grafana-jsonnet-refactor`)
 - Lib abstraction or file organization
 - Code style formatting
+- Automated formatting via `jsonnetfmt`
+
+If applying Jsonnet edits, keep the existing file structure and align with grafana-code mixin style (unified libs, config object, row structure).
 
 ## Target users
 

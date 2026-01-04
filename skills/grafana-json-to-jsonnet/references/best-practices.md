@@ -6,18 +6,21 @@
 - 1. Import Order (Strictly Follow)
 - 2. Naming Conventions
 - 3. Panel Construction
-- 4. Units and Thresholds
-- 5. Legend Selection
-- 6. Theme Selection
-- 7. Query Construction
-- 8. Comment Standards
-- 9. Configuration Object
-- 10. Selector Construction
-- 11. Variable Definitions
-- 12. Dashboard Definition
-- 13. File Organization
-- 14. Common Errors
-- 15. Code Indentation
+- 4. Row Construction
+- 5. Units and Thresholds
+- 6. Legend Selection
+- 7. Theme Selection
+- 8. Query Construction
+- 9. Comment Standards
+- 10. Configuration Object
+- 11. Selector Construction
+- 12. Variable Definitions
+- 13. Dashboard Definition
+- 14. Dashboard Metadata
+- 15. File Organization
+- 16. Common Errors
+- 17. Code Indentation
+- 18. Formatting Guardrail
 - Complete Example
 
 ## 1. Import Order (Strictly Follow)
@@ -35,24 +38,35 @@ local prom = import '../lib/prometheus.libsonnet';
 local standards = import '../lib/standards.libsonnet';
 local themes = import '../lib/themes.libsonnet';
 
-// 3. Config definition
+// 3. Config constants
+local DATASOURCE_UID = 'prometheus-thanos';
+// local DATASOURCE_UID = '${DS_PROMETHEUS}';
+
+// 4. Config definition
 local config = {
-  datasource: { type: 'prometheus', uid: 'prometheus-thanos' },
+  datasource: { type: 'prometheus', uid: DATASOURCE_UID },
   timezone: 'browser',
   timeFrom: 'now-6h',
   pluginVersion: '12.3.0',
 };
 
-// 4. Helper functions (if needed)
+// 5. Constants (if needed)
+local thresholds = { errorRate: { warn: 0.02, crit: 0.05 } };
+
+// 6. Helper functions (if needed)
 local buildSelector(labels) = { ... };
 
-// 5. Variable definitions
-local hostnameVariable = g.dashboard.variable.query.new(...);
-
-// 6. Panel definitions
+// 7. Panel definitions
 local qpsStat = panels.statPanel(...);
 
-// 7. Dashboard construction
+// 8. Row definitions
+local overviewRow = panels.rowPanel('Overview', collapsed=true)
++ g.panel.row.withPanels([qpsStat]);
+
+// 9. Variable definitions
+local hostnameVariable = g.dashboard.variable.query.new(...);
+
+// 10. Dashboard construction
 g.dashboard.new('Dashboard Name')
 + g.dashboard.withPanels([...])
 ```
@@ -151,7 +165,28 @@ local qpsStat = panels.statPanel(...)
 + g.panel.stat.gridPos.withW(4)
 ```
 
-## 4. Units and Thresholds
+### Prefer panels.withIdAndPatches for id/gridPos
+
+```jsonnet
+local basePanel = panels.statPanel(...);
+local statPanel = panels.withIdAndPatches(basePanel, id=1, gridPos={ h: 3, w: 4, x: 0, y: 0 });
+```
+
+## 4. Row Construction
+
+### Use panels.rowPanel or g.panel.row.new
+
+```jsonnet
+// ✅ Recommended: row panel with attached panels
+local overviewRow = panels.rowPanel('Overview', collapsed=true)
++ g.panel.row.gridPos.withH(layouts.row.height)
++ g.panel.row.gridPos.withW(layouts.row.width)
++ g.panel.row.gridPos.withX(0)
++ g.panel.row.gridPos.withY(0)
++ g.panel.row.withPanels([panel1, panel2]);
+```
+
+## 5. Units and Thresholds
 
 ### Use Standard Units
 
@@ -188,7 +223,7 @@ thresholds={
 }
 ```
 
-## 5. Legend Selection
+## 6. Legend Selection
 
 ### Choose Based on Series Count
 
@@ -218,7 +253,7 @@ local panel4 = panels.timeseriesPanel(
 );
 ```
 
-## 6. Theme Selection
+## 7. Theme Selection
 
 ### Choose Appropriate Timeseries Theme
 
@@ -243,7 +278,7 @@ theme=themes.timeseries.bars
 theme=themes.timeseries.areaStacked
 ```
 
-## 7. Query Construction
+## 8. Query Construction
 
 ### Use prom.libsonnet Helper Functions
 
@@ -279,7 +314,7 @@ targets=[
 ]
 ```
 
-## 8. Comment Standards
+## 9. Comment Standards
 
 ### Add Comments Before Complex Logic
 
@@ -307,17 +342,19 @@ theme=themes.timeseries.emphasized
 local qpsStat = panels.statPanel(...);  // Function name already says this
 ```
 
-## 9. Configuration Object
+## 10. Configuration Object
 
 ### Use Unified config Object
 
 ```jsonnet
 // ✅ Recommended: unified configuration
+local DATASOURCE_UID = 'prometheus-thanos';
+// local DATASOURCE_UID = '${DS_PROMETHEUS}';
+
 local config = {
   datasource: {
     type: 'prometheus',
-    uid: 'prometheus-thanos',  // provisioning mode
-    // uid: '${DS_PROMETHEUS}',  // manual import mode
+    uid: DATASOURCE_UID,
   },
   timezone: 'browser',
   timeFrom: 'now-6h',
@@ -333,7 +370,7 @@ local panel = panels.statPanel(
 );  // panels.libsonnet internally uses datasource
 ```
 
-## 10. Selector Construction
+## 11. Selector Construction
 
 ### Extract Common Selectors
 
@@ -377,7 +414,7 @@ local baseSelector = helpers.buildSelector(
 // Result: {hostname=~"$hostname",idc=~"$idc",status=~"2.."}
 ```
 
-## 11. Variable Definitions
+## 12. Variable Definitions
 
 ### Variable Configuration Standards
 
@@ -401,7 +438,7 @@ local hostnameVariable = g.dashboard.variable.query.new(
 };
 ```
 
-## 12. Dashboard Definition
+## 13. Dashboard Definition
 
 ### Dashboard Basic Configuration
 
@@ -417,7 +454,42 @@ g.dashboard.new('Dashboard Name')
 + g.dashboard.withPanels([panel1, panel2, ...])
 ```
 
-## 13. File Organization
+## 14. Dashboard Metadata
+
+### Add __inputs / __requires for manual import
+
+```jsonnet
+baseDashboard {
+  __inputs: [
+    {
+      name: 'DS_PROMETHEUS',
+      label: 'Prometheus Datasource',
+      type: 'datasource',
+      pluginId: 'prometheus',
+      pluginName: 'Prometheus',
+    },
+  ],
+  __requires: [
+    { type: 'datasource', id: 'prometheus', name: 'Prometheus', version: '1.0.0' },
+    { type: 'grafana', id: 'grafana', name: 'Grafana', version: config.pluginVersion },
+  ],
+  annotations: {
+    list: [
+      {
+        builtIn: 1,
+        datasource: { type: 'grafana', uid: '-- Grafana --' },
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        type: 'dashboard',
+      },
+    ],
+  },
+}
+```
+
+## 15. File Organization
 
 ### Single-file Structure
 
@@ -428,14 +500,16 @@ mixin/application/
 
 **dashboard.jsonnet includes:**
 - Imports
-- Config
-- Variables
+- Config constants and config
+- Constants and local helpers (if needed)
 - Panel definitions
-- Dashboard definition
+- Row definitions
+- Variables
+- Dashboard definition + metadata
 
-Do not create dashboard-specific lib files for this skill.
+Do not create dashboard-specific lib files for this skill. Use local helpers or update `mixin/lib/*.libsonnet` only when a pattern is truly reusable.
 
-## 14. Common Errors
+## 16. Common Errors
 
 ### Error 1: Using Wrong Unit Names
 
@@ -472,7 +546,7 @@ prom.p50(...) { expr: self.expr + ' * 1000' }
 prom.p50(...) + { expr: super.expr + ' * 1000' }
 ```
 
-## 15. Code Indentation
+## 17. Code Indentation
 
 ### Use 2-Space Indentation
 
@@ -493,6 +567,10 @@ local config = {
     },
 };
 ```
+
+## 18. Formatting Guardrail
+
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Complete Example
 

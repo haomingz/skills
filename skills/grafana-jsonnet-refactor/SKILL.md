@@ -45,11 +45,11 @@ Extract common configuration (datasource, pluginVersion, timezone) into a `confi
 
 **Step 5: Replace panels with unified constructors**
 
-Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds. Remove duplicated helper functions.
+Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds and `themes.*` for timeseries styling. Add `id` and `gridPos` via `panels.withIdAndPatches(...)` or `+ { id, gridPos }`. Remove duplicated helper functions.
 
 **Step 6: Organize file structure**
 
-Structure the file: imports → config → variables → panels → dashboard. Keep all panel definitions as `local` variables in the single file.
+Structure the file: imports → config → constants → helpers → panels → rows → variables → dashboard. Keep all panel definitions as `local` variables in the single file.
 
 **Step 7: Compile and verify**
 
@@ -65,7 +65,9 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count an
 
 - Preserve metric semantics and layout intent.
 - Avoid broad rewrites; focus on de-duplication and standards alignment.
+- Keep a single file; do not create dashboard-specific lib files.
 - Only update `mixin/lib/*.libsonnet` for truly reusable components.
+- Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files.
 
 ## Quality checks
 
@@ -74,14 +76,22 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count an
 - Units and thresholds use `standards.*`.
 - Queries use `prom.*` helpers where applicable.
 - No dashboard-specific lib files exist in final output.
+- Preserve `__inputs` / `__requires` and manual import lines when present.
 
 ## Minimal single-file skeleton
 
 ```jsonnet
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
+local helpers = import '../lib/helpers.libsonnet';
+local layouts = import '../lib/layouts.libsonnet';
 local panels = import '../lib/panels.libsonnet';
 local prom = import '../lib/prometheus.libsonnet';
 local standards = import '../lib/standards.libsonnet';
+local themes = import '../lib/themes.libsonnet';
+
+// Provisioning mode (real UID). For manual import, switch to ${DS_*}.
+local DATASOURCE_UID = 'prometheus-thanos';
+// local DATASOURCE_UID = '${DS_PROMETHEUS}';
 
 local config = {
   datasource: { type: 'prometheus', uid: DATASOURCE_UID },

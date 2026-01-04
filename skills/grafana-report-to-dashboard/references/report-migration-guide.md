@@ -7,6 +7,8 @@ This guide summarizes how to convert Python report scripts into Grafana Jsonnet 
 - Preserve metric semantics and calculations from the report.
 - Support both ClickHouse and Elasticsearch (ES7/ES8) datasources.
 - Keep dashboard structure clear and reviewable.
+- Keep a single Jsonnet file with local helpers (no dashboard-specific libs).
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Recommended workflow
 

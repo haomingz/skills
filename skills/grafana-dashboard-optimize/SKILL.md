@@ -61,6 +61,7 @@ If user approves changes:
 - Use unified libraries from `mixin/lib/` (`panels`, `standards`, `themes`)
 - Keep code structure changes minimal (content-only optimization)
 - Include Jsonnet snippets for high-impact changes
+- Match grafana-code mixin structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
 
 For query optimization patterns, see `references/query-optimization.md`.
 For visualization guidelines, see `references/visualization-guidelines.md`.
@@ -118,6 +119,7 @@ Use this structure for recommendations:
 - Do not refactor code structure; use `grafana-jsonnet-refactor` for that.
 - Avoid broad rewrites; focus on content quality and observability value.
 - Keep deep guidance in `references/` instead of bloating this file.
+- Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files.
 
 ## References (load as needed)
 

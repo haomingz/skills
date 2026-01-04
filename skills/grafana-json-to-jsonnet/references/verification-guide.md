@@ -136,7 +136,7 @@ OUTPUT_JSONNET="output-dashboard.jsonnet"
 SOURCE_ROWS=$(jq '[.panels[] | select(.type == "row")] | length' $INPUT_JSON)
 
 # Count row definitions in Jsonnet
-JSONNET_ROWS=$(grep -c "g.dashboard.row.new" $OUTPUT_JSONNET)
+JSONNET_ROWS=$(rg -c "panels\\.rowPanel\\(|g\\.panel\\.row\\.new|type: 'row'" $OUTPUT_JSONNET)
 
 echo "Source rows: $SOURCE_ROWS"
 echo "Jsonnet rows: $JSONNET_ROWS"
@@ -151,7 +151,7 @@ echo -e "\nSource row titles:"
 jq -r '.panels[] | select(.type == "row") | .title' $INPUT_JSON
 
 echo -e "\nJsonnet row definitions:"
-grep "g.dashboard.row.new" $OUTPUT_JSONNET
+rg "panels\\.rowPanel\\(|g\\.panel\\.row\\.new|type: 'row'" $OUTPUT_JSONNET
 ```
 
 ## Step 5: Complete verification script
@@ -222,7 +222,7 @@ fi
 # 3. Row structure verification
 echo -e "\n3. Row Structure Verification:"
 SOURCE_ROWS=$(jq '[.panels[] | select(.type == "row")] | length' $INPUT_JSON)
-JSONNET_ROWS=$(grep -c "g.dashboard.row.new" $OUTPUT_JSONNET)
+JSONNET_ROWS=$(rg -c "panels\\.rowPanel\\(|g\\.panel\\.row\\.new|type: 'row'" $OUTPUT_JSONNET)
 
 echo "Source rows: $SOURCE_ROWS"
 echo "Jsonnet rows: $JSONNET_ROWS"

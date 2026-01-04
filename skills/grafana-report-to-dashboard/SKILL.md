@@ -64,7 +64,7 @@ For manual import mode, use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` variabl
 
 **Step 5: Implement panels**
 
-Implement each panel using unified libraries. Select datasource explicitly per panel. Preserve report calculations and metric semantics.
+Implement each panel using unified libraries. Select datasource explicitly per panel. Preserve report calculations and metric semantics. Use `standards.*` units/thresholds, `themes.*` for timeseries style, and `layouts.*` or `panels.withIdAndPatches(...)` for grid placement.
 
 **Step 6: Compile and verify**
 
@@ -82,6 +82,8 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Verify panel results match the report
 - Build succeeds (`mixin/build.sh` or `mixin/build.ps1`).
 - Panel results match the report for a known time window.
 - ES7/ES8 and ClickHouse queries return data in Grafana.
+ - Jsonnet is kept in a single file with local helpers (no dashboard-specific libs).
+ - `__inputs` / `__requires` are present when manual import is supported.
 
 ## Manual import support
 
@@ -123,6 +125,10 @@ local requestsPanel = panels.timeseriesPanel(
   pluginVersion=config.pluginVersion
 );
 ```
+
+## Formatting guardrail
+
+- Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files. Keep formatting manual and consistent with grafana-code mixin style.
 
 ## References (load as needed)
 

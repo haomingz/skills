@@ -384,15 +384,9 @@ prom.rateQuery(
 
 Before writing Jsonnet, test PromQL queries in Grafana Explore to ensure they're correct.
 
-### Recommendation 2: Use jsonnet fmt to format code
+### Recommendation 2: Avoid jsonnetfmt formatting
 
-```bash
-# Format code
-jsonnet fmt -i dashboard.jsonnet
-
-# Or auto-format in build.sh
-jsonnet fmt -i mixin/**/*.jsonnet
-```
+Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet. Keep formatting manual and consistent with grafana-code mixin style.
 
 ### Recommendation 3: Migrate incrementally, don't refactor all at once
 

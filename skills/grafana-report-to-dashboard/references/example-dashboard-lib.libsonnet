@@ -1,10 +1,11 @@
-// Scaffold lib example; inline panels for final output.
+// Example reusable helper for mixin/lib (only if shared across dashboards).
+// Do not create dashboard-specific lib files.
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
-local layouts = import '../../lib/layouts.libsonnet';
-local panels = import '../../lib/panels.libsonnet';
-local standards = import '../../lib/standards.libsonnet';
-local themes = import '../../lib/themes.libsonnet';
-local clickhouse = import '../../lib/clickhouse.libsonnet';
+local layouts = import './layouts.libsonnet';
+local panels = import './panels.libsonnet';
+local standards = import './standards.libsonnet';
+local themes = import './themes.libsonnet';
+local clickhouse = import './clickhouse.libsonnet';
 
 // Example queries only. Replace filters (like environment:prod) or parameterize with variables.
 

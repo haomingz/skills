@@ -8,7 +8,7 @@ This playbook provides detailed steps and patterns for refactoring Grafana Jsonn
 - [Step 1: Audit the current dashboard](#step-1-audit-the-current-dashboard)
 - [Step 2: Decide the structure](#step-2-decide-the-structure)
 - [Step 3: Normalize config and selectors](#step-3-normalize-config-and-selectors)
-- [Step 4: Extract panel builders](#step-4-extract-panel-builders-if-splitting)
+- [Step 4: Extract local helpers](#step-4-extract-local-helpers)
 - [Step 5: Refactor panels](#step-5-refactor-panels)
 - [Step 6: Modernize legacy types](#step-6-modernize-legacy-types)
 - [Step 7: Compile and verify](#step-7-compile-and-verify)
@@ -22,6 +22,7 @@ This playbook provides detailed steps and patterns for refactoring Grafana Jsonn
 - Reduce duplication and align with unified libraries.
 - Keep changes focused; avoid wide rewrites.
 - Only update `mixin/lib/*.libsonnet` if a pattern is reusable across dashboards.
+- Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Step 1: Audit the current dashboard
 
@@ -34,8 +35,8 @@ Capture:
 
 ## Step 2: Decide the structure
 
-- Single file is acceptable for small dashboards with minimal repetition.
-- Split to entrypoint + lib when there are repeated panel patterns, shared selectors, or many panels.
+- Keep a single file and use local helpers or wrapper functions for repeated patterns.
+- Only update `mixin/lib/*.libsonnet` if a pattern is reusable across dashboards.
 
 ## Step 3: Normalize config and selectors
 
@@ -55,59 +56,34 @@ local config = {
 local baseSelector = '{job="api",env="prod"}';
 ```
 
-## Step 4: Extract panel builders (if splitting)
+## Step 4: Extract local helpers
 
-- Create `lib/<dashboard>_panels.libsonnet`.
-- Define `panel_*` builders and a `build(config)` method.
-- Replace raw Grafonnet blocks with `panels.*Panel()` constructors.
+- Create local helper functions for repeated panel patterns.
+- Wrap unified library constructors (`panels.*`, `prom.*`) and add `id/gridPos` via `panels.withIdAndPatches(...)`.
+- Keep helpers in the same file; avoid dashboard-specific libs.
 
-Example lib structure:
+Example local helper:
 
 ```jsonnet
-local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
-local panels = import '../../lib/panels.libsonnet';
-local prom = import '../../lib/prometheus.libsonnet';
-local standards = import '../../lib/standards.libsonnet';
-local themes = import '../../lib/themes.libsonnet';
-local layouts = import '../../lib/layouts.libsonnet';
-
-{
-  errorRatePanel(config)::
+local httpRatePanel(title, expr, id, gridPos) =
+  panels.withIdAndPatches(
     panels.timeseriesPanel(
-      title='Error Rate',
-      targets=[prom.errorRate('http_requests_total', baseSelector, 'status', 'Error Rate')],
+      title=title,
+      targets=[prom.target(expr, 'QPS')],
       datasource=config.datasource,
-      unit=standards.units.errorRate,
+      unit=standards.units.qps,
       theme=themes.timeseries.standard,
       pluginVersion=config.pluginVersion
-    )
-    + g.panel.timeSeries.gridPos.withH(6)
-    + g.panel.timeSeries.gridPos.withW(12),
-
-  build(config):: [
-    self.errorRatePanel(config),
-  ],
-}
+    ),
+    id=id,
+    gridPos=gridPos
+  );
 ```
 
-## Step 5: Keep the entrypoint minimal
+## Step 5: Keep the file organized
 
-Entrypoint responsibilities:
-- Imports and config
-- Variables
-- Dashboard assembly (`g.dashboard.withPanels(...)`)
-
-Example:
-
-```jsonnet
-local panelsLib = import './lib/<dashboard>_panels.libsonnet';
-
-local variables = [hostnameVariable, environmentVariable];
-
-g.dashboard.new('Dashboard')
-+ g.dashboard.withVariables(variables)
-+ g.dashboard.withPanels(panelsLib.build(config))
-```
+Recommended order:
+- imports → config → constants → helpers → panels → rows → variables → dashboard
 
 ## Step 6: Replace raw Grafonnet blocks
 
@@ -140,6 +116,7 @@ Pass the correct datasource into each panel constructor and keep targets consist
 ## Common pitfalls
 
 - Moving dashboard-specific panels into `mixin/lib/`.
+- Creating dashboard-specific lib files instead of local helpers.
 - Changing query semantics while refactoring.
 - Leaving duplicated selectors across panels.
 - Losing row collapse/expand behavior.
