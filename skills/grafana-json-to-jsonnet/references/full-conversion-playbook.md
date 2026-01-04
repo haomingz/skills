@@ -469,6 +469,6 @@ Use it only as a scratchpad: inline all panels and variables into a single file 
 
 ## Examples
 
-- `examples/grafana-json-to-jsonnet/input-dashboard.json`
-- `examples/grafana-json-to-jsonnet/output-dashboard.jsonnet`
-- `examples/grafana-json-to-jsonnet/output-panels.libsonnet` (reference only)
+- `references/input-dashboard.json`
+- `references/output-dashboard.jsonnet`
+- `references/output-panels.libsonnet` (reference only)

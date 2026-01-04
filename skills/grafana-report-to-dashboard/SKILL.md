@@ -96,3 +96,6 @@ local config = {
 ## References (load as needed)
 
 - `references/full-report-playbook.md`
+- `references/example-report.py`
+- `references/example-dashboard.jsonnet`
+- `references/example-dashboard-lib.libsonnet`

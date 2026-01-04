@@ -1,4 +1,4 @@
-// Example API Dashboard (generated scaffold)
+// Example API Dashboard (generated scaffold; requires lib output from convert script)
 
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
 local panelsLib = import './lib/example-api_panels.libsonnet';

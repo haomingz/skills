@@ -2,6 +2,17 @@
 
 > This document provides a quick API reference for grafana-code unified libraries
 
+## Contents
+- panels.libsonnet - Panel Constructors
+- standards.libsonnet - Standard Specifications
+- prom.libsonnet - Prometheus Query Tools
+- themes.libsonnet - Visual Themes
+- layouts.libsonnet - Layout Standards
+- helpers.libsonnet - Utility Functions
+- clickhouse.libsonnet - ClickHouse Query Tools
+- Complete Example
+- Common Questions
+
 ## panels.libsonnet - Panel Constructors
 
 ### statPanel - Stat Panel

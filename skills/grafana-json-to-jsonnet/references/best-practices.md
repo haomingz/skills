@@ -2,6 +2,24 @@
 
 > This document summarizes grafana-code code organization and best practices
 
+## Contents
+- 1. Import Order (Strictly Follow)
+- 2. Naming Conventions
+- 3. Panel Construction
+- 4. Units and Thresholds
+- 5. Legend Selection
+- 6. Theme Selection
+- 7. Query Construction
+- 8. Comment Standards
+- 9. Configuration Object
+- 10. Selector Construction
+- 11. Variable Definitions
+- 12. Dashboard Definition
+- 13. File Organization
+- 14. Common Errors
+- 15. Code Indentation
+- Complete Example
+
 ## 1. Import Order (Strictly Follow)
 
 ```jsonnet
@@ -478,4 +496,4 @@ local config = {
 
 ## Complete Example
 
-See `examples/example-output.jsonnet` for a scaffold-style example. Inline all panels and variables into a single file for final output.
+See `references/output-dashboard.jsonnet` for a scaffold-style example. Inline all panels and variables into a single file for final output.

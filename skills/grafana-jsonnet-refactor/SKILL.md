@@ -96,3 +96,6 @@ g.dashboard.new('Dashboard')
 - `references/refactor-guide.md`
 - `references/full-refactor-playbook.md`
 - `references/refactor-checklist.md`
+- `references/example-before.jsonnet`
+- `references/example-after-dashboard.jsonnet`
+- `references/example-after-lib.libsonnet`

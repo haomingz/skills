@@ -1,6 +1,6 @@
 ---
 name: skill-name
-description: Clear, specific trigger guidance. Mention the input types and the desired output.
+description: Describes what the skill does and when to use it. Use third-person and include trigger keywords.
 ---
 
 # Skill Title
@@ -13,4 +13,7 @@ description: Clear, specific trigger guidance. Mention the input types and the d
 
 ## Steps
 1. Follow a repeatable workflow
-2. Reference bundled files in `references/` or `scripts/`
+2. Reference bundled files in `references/` or `scripts/` using forward-slash paths
+
+## References
+- `references/example.md`

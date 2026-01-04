@@ -1,4 +1,4 @@
-// Example after refactor (entrypoint)
+// Example after refactor (scaffold entrypoint; inline panels for final output)
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
 local panelsLib = import './lib/example_panels.libsonnet';
 

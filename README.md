@@ -48,7 +48,7 @@ Claude: [自动触发 grafana-json-to-jsonnet skill]
 
 **功能：**
 - 将 Grafana JSON 导出转换为结构化的 Jsonnet
-- 将代码拆分为 entrypoint + library 结构
+- 产出单文件 Jsonnet；仅在可复用时更新 mixin/lib
 - 参数化数据源
 - 将 panel 映射到 grafana-code builders
 
@@ -58,7 +58,7 @@ Claude: [自动触发 grafana-json-to-jsonnet skill]
 
 ### 2. grafana-jsonnet-refactor
 
-将单体 Grafana Jsonnet 仪表板重构为清晰、可维护的拆分结构。
+将单体 Grafana Jsonnet 仪表板重构为清晰、可维护的统一库风格。
 
 **触发短语：** "refactor grafana jsonnet", "split dashboard", "extract lib helpers"
 
@@ -69,7 +69,6 @@ Claude: [自动触发 grafana-jsonnet-refactor skill]
 ```
 
 **功能：**
-- 将单体仪表板拆分为 entrypoint + lib
 - 提取可复用的 panel builders
 - 消除代码重复
 - 遵循 grafana-code mixin 规范
@@ -98,6 +97,27 @@ Claude: [自动触发 grafana-report-to-dashboard skill]
 
 **了解更多：** [grafana-report-to-dashboard](skills/grafana-report-to-dashboard/SKILL.md)
 
+---
+
+### 4. grafana-dashboard-optimize
+
+优化 Grafana Jsonnet 仪表板内容，提升可观测性与诊断效率（RED/USE/Golden Signals）。
+
+**触发短语：** "optimize grafana dashboard", "observability review", "dashboard audit"
+
+**使用示例：**
+```
+你：帮我评审这个 Grafana dashboard 的可观测性覆盖是否足够？
+Claude: [自动触发 grafana-dashboard-optimize skill]
+```
+
+**功能：**
+- 审计仪表板内容质量与诊断路径
+- 提出高优先级改进建议（含理由和预期收益）
+- 输出可落地的 Jsonnet 变更建议
+
+**了解更多：** [grafana-dashboard-optimize](skills/grafana-dashboard-optimize/SKILL.md)
+
 ## 仓库结构
 
 ```
@@ -111,10 +131,10 @@ Claude: [自动触发 grafana-report-to-dashboard skill]
 │   ├── grafana-json-to-jsonnet/
 │   │   ├── SKILL.md            # 技能定义
 │   │   ├── scripts/            # 转换脚本
-│   │   ├── references/         # 参考文档
-│   │   └── examples/           # 示例文件
+│   │   └── references/         # 参考文档（含示例）
 │   ├── grafana-jsonnet-refactor/
 │   └── grafana-report-to-dashboard/
+│   └── grafana-dashboard-optimize/
 ├── templates/                   # 技能模板（不会被自动发现）
 │   └── skill-template/
 └── docs/                        # 文档
@@ -142,8 +162,7 @@ Skills 使用**渐进式披露**加载模型：
 
 3. **打包资源** - 按需加载
    - `scripts/`: 可执行代码
-   - `references/`: 参考文档
-   - `examples/`: 示例输入/输出
+   - `references/`: 参考文档（可包含示例输入/输出）
    - `assets/`: 输出模板
 
 这种设计在保持 Claude 上下文高效的同时，在需要时提供深度领域知识。
@@ -156,9 +175,9 @@ Skills 使用**渐进式披露**加载模型：
    ```
 
 2. 编辑 `SKILL.md`：
-   - 更新 frontmatter（name、带触发短语的 description）
+   - 更新 frontmatter（name、第三人称描述且包含触发语境的 description）
    - 编写清晰的指令
-   - 添加示例和参考资料
+   - 添加示例和参考资料（建议放在 `references/`）
 
 3. 本地测试：
    ```bash
@@ -176,7 +195,7 @@ Skills 使用**渐进式披露**加载模型：
 1. **Fork 仓库**并创建功能分支
 2. **遵循官方 Agent Skills 规范**（参见 docs/skills-spec.md）
 3. **在 skill 描述中使用清晰的触发短语**
-4. **在 `examples/` 目录中包含示例**
+4. **在 `references/` 中包含示例（如有）**
 5. **提交前充分测试**
 6. **提交带有清晰描述的 pull request**
 
@@ -187,11 +206,7 @@ Skills 使用**渐进式披露**加载模型：
 git clone https://github.com/haomingz/skills.git
 cd skills
 
-# 安装 Python 依赖（如需要）
-pip install -r requirements.txt
-
-# 验证 skill 结构
-bash scripts/validate-skills.sh
+# 如需运行脚本，请按对应 skill 的说明安装依赖
 ```
 
 ## 故障排除
@@ -205,7 +220,7 @@ bash scripts/validate-skills.sh
 ### 脚本执行失败？
 
 - 验证 Python 版本（3.8+）
-- 检查脚本依赖：`pip install -r requirements.txt`
+- 检查 `SKILL.md` 中的依赖说明
 - 查看脚本输出中的具体错误
 
 ### 需要帮助？

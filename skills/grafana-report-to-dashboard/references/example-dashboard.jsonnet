@@ -1,4 +1,4 @@
-// Example report migration dashboard (entrypoint)
+// Example report migration dashboard (scaffold entrypoint; inline panels for final output)
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
 local panelsLib = import './lib/report_panels.libsonnet';
 

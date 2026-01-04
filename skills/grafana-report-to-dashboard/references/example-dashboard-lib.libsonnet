@@ -1,3 +1,4 @@
+// Scaffold lib example; inline panels for final output.
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
 local layouts = import '../../lib/layouts.libsonnet';
 local panels = import '../../lib/panels.libsonnet';

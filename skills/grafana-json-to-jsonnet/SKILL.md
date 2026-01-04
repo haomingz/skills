@@ -158,7 +158,7 @@ g.dashboard.new('Dashboard Name')
 
 ## Optional scaffold script
 
-`skills/grafana-json-to-jsonnet/scripts/convert_grafana_json.py` generates a scaffold (entrypoint + lib + raw files).
+`scripts/convert_grafana_json.py` generates a scaffold (entrypoint + lib + raw files).
 Use it only as a scratchpad: inline all panels and variables into the single file and delete raw JSON files.
 
 Example:
@@ -210,5 +210,7 @@ Required checks:
 - `references/lib-api-reference.md`
 - `references/mapping.md`
 - `references/common-issues.md`
-- `examples/grafana-json-to-jsonnet/input-dashboard.json`
-- `examples/grafana-json-to-jsonnet/output-dashboard.jsonnet`
+- `references/input-dashboard.json`
+- `references/output-dashboard.jsonnet`
+- `references/output-panels.libsonnet`
+- `references/output-raw-variables.json`

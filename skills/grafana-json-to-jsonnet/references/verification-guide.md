@@ -2,6 +2,18 @@
 
 This guide provides detailed scripts and procedures for verifying that your Grafana JSON to Jsonnet conversion is complete and accurate.
 
+## Contents
+- Overview
+- Step 1: Create inventory from source JSON
+- Step 2: Panel count verification
+- Step 3: Variable completeness check
+- Step 4: Row structure verification
+- Step 5: Complete verification script
+- Step 6: Visual verification in Grafana
+- Step 7: Debugging missing elements
+- Feedback loop process
+- Quick reference: Common jq patterns
+
 ## Overview
 
 After converting a dashboard, run these verification checks to ensure:
