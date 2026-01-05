@@ -5,6 +5,9 @@
 - Title clearly states purpose
 - Tags and default time range are set
 - Refresh interval is sensible
+- Variables return values in Grafana
+- No duplicate or extra variables
+- Regex filters applied where needed for variable values
 
 ## Panel Level
 
@@ -13,6 +16,7 @@
 - Description explains context and thresholds (every panel has one)
 - Units and thresholds use `standards.*`
 - Legend is optimized for series count
+- Row membership is correct (panels align to row `gridPos.y` and rows include panels)
 
 ## Table Panels
 

@@ -166,6 +166,9 @@ Audit questions:
 - Are variable names clear and meaningful?
 - Are defaults sensible?
 - Are cascading relationships correct?
+- Do variable dropdowns return values in Grafana?
+- Are there duplicate or unused variables?
+- Do variable values need regex filtering to remove noise?
 
 Example:
 
@@ -183,6 +186,11 @@ local environmentVariable = g.dashboard.variable.query.new(
 + g.dashboard.variable.query.refresh.onLoad()
 + { current: { text: 'production', value: 'production' } };
 ```
+
+Validation checklist (variables):
+- Verify each variable dropdown returns values in Grafana.
+- Remove duplicate or unused variables.
+- Add or preserve `regex` filters for high-cardinality or noisy labels.
 
 #### Dimension 4: Visualization and visual expression
 
@@ -231,6 +239,10 @@ Recommended flow:
 - Overview -> Symptoms -> Root cause
 - Left-to-right importance within rows
 - Use collapsed rows for deep-dive sections
+
+Row membership checks:
+- Panels align to their row `gridPos.y`.
+- Row panels include the expected child panels.
 
 #### Dimension 6: Titles and descriptions
 

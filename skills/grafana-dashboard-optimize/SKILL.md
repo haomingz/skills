@@ -76,6 +76,10 @@ Re-check:
 - Layout follows diagnostic flow
 - RED/USE/Golden Signals coverage is complete
 - Table panels remove unused fields and apply appropriate overrides/thresholds
+- Variables return values in Grafana (non-empty dropdowns)
+- No duplicate or extra variables after cleanup
+- Regex filters preserved or added where needed for variable values
+- Row membership is correct (panels align to row `gridPos.y` and rows include panels)
 
 ## Quick optimization checklist
 
@@ -85,6 +89,9 @@ Re-check:
 - [ ] Panel titles are consistent and descriptions exist for every panel
 - [ ] Layout follows overview → symptoms → root cause
 - [ ] Table panels remove unused fields and add key overrides/thresholds
+- [ ] Variables return values and have no duplicates/extras
+- [ ] Regex filters preserved or added when needed
+- [ ] Row membership is correct
 
 ## Assessment report format
 
