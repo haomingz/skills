@@ -82,8 +82,11 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Verify panel results match the report
 - Build succeeds (`mixin/build.sh` or `mixin/build.ps1`).
 - Panel results match the report for a known time window.
 - ES7/ES8 and ClickHouse queries return data in Grafana.
- - Jsonnet is kept in a single file with local helpers (no dashboard-specific libs).
- - `__inputs` / `__requires` are present when manual import is supported.
+- Jsonnet is kept in a single file with local helpers (no dashboard-specific libs).
+- `__inputs` / `__requires` are present when manual import is supported.
+- Variables return values in Grafana; no duplicate or extra variables.
+- Regex filters preserved or added where needed.
+- Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
 
 ## Manual import support
 

@@ -20,6 +20,7 @@ Use this guide to refactor a Grafana Jsonnet dashboard while keeping behavior st
 3. Replace raw Grafonnet blocks with unified constructors.
 4. Group panels into rows with `panels.rowPanel(...)` or `g.panel.row.new(...)`.
 5. Compile and verify (`mixin/build.sh` or `mixin/build.ps1`).
+6. Verify variables return values (no duplicates, regex preserved) and rows manage panels correctly.
 
 ## Common refactor moves
 

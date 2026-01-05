@@ -7,7 +7,7 @@ This guide provides detailed scripts and procedures for verifying that your Graf
 - Step 1: Create inventory from source JSON
 - Step 2: Panel count verification
 - Step 3: Variable completeness check
-- Step 4: Row structure verification
+- Step 4: Row structure and row membership verification
 - Step 5: Complete verification script
 - Step 6: Visual verification in Grafana
 - Step 7: Debugging missing elements
@@ -124,7 +124,83 @@ fi
 rm -f /tmp/source_vars.txt /tmp/jsonnet_vars.txt
 ```
 
-## Step 4: Row structure verification
+### Step 3.1: Duplicate and extra variable detection
+
+Detect duplicate variable definitions and extra variables that were not in the source JSON:
+
+```bash
+INPUT_JSON="input-dashboard.json"
+OUTPUT_JSONNET="output-dashboard.jsonnet"
+
+# Normalize variable lists
+jq -r '.templating.list[].name' $INPUT_JSON | sort > /tmp/source_vars.txt
+grep "g.dashboard.variable" $OUTPUT_JSONNET | grep -oP "(?<=')[^']+(?=')" | sort > /tmp/jsonnet_vars_raw.txt
+
+# Duplicates in Jsonnet
+sort /tmp/jsonnet_vars_raw.txt | uniq -d > /tmp/jsonnet_vars_dups.txt
+
+# Extra variables (in Jsonnet but not in source)
+comm -13 /tmp/source_vars.txt <(sort /tmp/jsonnet_vars_raw.txt | uniq) > /tmp/jsonnet_vars_extra.txt
+
+echo "Duplicate variables in Jsonnet:"
+cat /tmp/jsonnet_vars_dups.txt
+
+echo -e "\nExtra variables in Jsonnet (not in source):"
+cat /tmp/jsonnet_vars_extra.txt
+
+# Cleanup
+rm -f /tmp/source_vars.txt /tmp/jsonnet_vars_raw.txt /tmp/jsonnet_vars_dups.txt /tmp/jsonnet_vars_extra.txt
+```
+
+### Step 3.2: Regex filter preservation and necessity (heuristic)
+
+If the source variable uses `regex`, ensure the Jsonnet output preserves it. Prefer checking the compiled JSON output.
+
+To generate compiled JSON:
+```bash
+jsonnet -J vendor output-dashboard.jsonnet > output-dashboard.json
+```
+
+```bash
+INPUT_JSON="input-dashboard.json"
+COMPILED_JSON="output-dashboard.json"
+
+# Variables that require regex in source
+jq -r '.templating.list[] | select(.regex != null and .regex != "") | .name' $INPUT_JSON | sort > /tmp/source_regex_vars.txt
+
+# Variables that still have regex in compiled output
+jq -r '.templating.list[] | select(.regex != null and .regex != "") | .name' $COMPILED_JSON | sort > /tmp/output_regex_vars.txt
+
+echo "Source regex variables:"
+cat /tmp/source_regex_vars.txt
+
+echo -e "\nOutput regex variables:"
+cat /tmp/output_regex_vars.txt
+
+echo -e "\nMissing regex in output:"
+comm -23 /tmp/source_regex_vars.txt /tmp/output_regex_vars.txt
+
+rm -f /tmp/source_regex_vars.txt /tmp/output_regex_vars.txt
+```
+
+Heuristic warning for variables that likely need regex filters (high-cardinality labels). Review these manually:
+
+```bash
+jq -r '.templating.list[]
+  | select(.query != null)
+  | select(.query | test("label_values\\([^,]+, *(pod|instance|ip|host|node|url|path)\\)"))
+  | .name' input-dashboard.json
+```
+
+If any of these variables return excessive values or include unwanted suffixes, add a `regex` filter in Jsonnet to constrain the options.
+
+### Step 3.3: Variable value availability (Grafana UI)
+
+After import, open each variable dropdown in Grafana:
+- Variables must return non-empty values.
+- If empty, check datasource UID, query syntax, and regex filters.
+
+## Step 4: Row structure and row membership verification
 
 Verify rows are present and named correctly:
 
@@ -154,6 +230,32 @@ echo -e "\nJsonnet row definitions:"
 rg "panels\\.rowPanel\\(|g\\.panel\\.row\\.new|type: 'row'" $OUTPUT_JSONNET
 ```
 
+### Step 4.1: Row membership verification (compiled JSON)
+
+Use compiled JSON to verify panels are attached to the correct row (by `gridPos.y`):
+
+```bash
+COMPILED_JSON="output-dashboard.json"
+
+# Rows with no panels at matching Y
+jq -r '
+  [ .panels[] | select(.type=="row") | {title, y: .gridPos.y} ] as $rows
+  | [ .panels[] | select(.type!="row") | .gridPos.y ] as $ys
+  | $rows[]
+  | select(.y as $y | ($ys | index($y) | not))
+  | "\(.title) (y=\(.y))"
+' $COMPILED_JSON
+
+# Panels that are not aligned to any row Y
+jq -r '
+  [ .panels[] | select(.type=="row") | .gridPos.y ] as $rows
+  | [ .panels[] | select(.type!="row") | {title, y: .gridPos.y} ] as $panels
+  | $panels[]
+  | select($rows | index(.y) | not)
+  | "\(.title) (y=\(.y))"
+' $COMPILED_JSON
+```
+
 ## Step 5: Complete verification script
 
 Combine all checks into a single verification script:
@@ -161,10 +263,12 @@ Combine all checks into a single verification script:
 ```bash
 #!/bin/bash
 # verify-conversion.sh
-# Run this after conversion to verify completeness
+# Run this after conversion to verify completeness.
+# Optional 3rd argument: compiled JSON output for regex/row membership checks.
 
 INPUT_JSON="${1:-input-dashboard.json}"
 OUTPUT_JSONNET="${2:-output-dashboard.jsonnet}"
+COMPILED_JSON="${3:-}"
 
 if [ ! -f "$INPUT_JSON" ]; then
   echo "Error: Input JSON file not found: $INPUT_JSON"
@@ -219,6 +323,44 @@ else
   ERRORS=$((ERRORS + 1))
 fi
 
+# 2.1 Duplicate/extra variables
+echo -e "\n2.1 Duplicate/Extra Variables:"
+jq -r '.templating.list[].name' $INPUT_JSON | sort > /tmp/source_vars.txt
+grep "g.dashboard.variable" $OUTPUT_JSONNET | grep -oP "(?<=')[^']+(?=')" | sort > /tmp/jsonnet_vars_raw.txt
+
+DUP_VARS=$(sort /tmp/jsonnet_vars_raw.txt | uniq -d | wc -l | tr -d ' ')
+EXTRA_VARS=$(comm -13 /tmp/source_vars.txt <(sort /tmp/jsonnet_vars_raw.txt | uniq) | wc -l | tr -d ' ')
+
+if [ "$DUP_VARS" -eq 0 ] && [ "$EXTRA_VARS" -eq 0 ]; then
+  echo "✓ No duplicate or extra variables"
+else
+  echo "✗ WARNING: Duplicate or extra variables detected"
+  echo "Duplicates:"
+  sort /tmp/jsonnet_vars_raw.txt | uniq -d
+  echo "Extras:"
+  comm -13 /tmp/source_vars.txt <(sort /tmp/jsonnet_vars_raw.txt | uniq)
+fi
+
+rm -f /tmp/source_vars.txt /tmp/jsonnet_vars_raw.txt
+
+# 2.2 Regex preservation (optional; requires compiled JSON)
+if [ -n "$COMPILED_JSON" ] && [ -f "$COMPILED_JSON" ]; then
+  echo -e "\n2.2 Regex Preservation (compiled JSON):"
+  jq -r '.templating.list[] | select(.regex != null and .regex != "") | .name' $INPUT_JSON | sort > /tmp/source_regex_vars.txt
+  jq -r '.templating.list[] | select(.regex != null and .regex != "") | .name' $COMPILED_JSON | sort > /tmp/output_regex_vars.txt
+
+  if diff /tmp/source_regex_vars.txt /tmp/output_regex_vars.txt > /dev/null; then
+    echo "✓ Regex filters preserved"
+  else
+    echo "✗ WARNING: Regex filters missing in output"
+    echo "Missing regex variables:"
+    comm -23 /tmp/source_regex_vars.txt /tmp/output_regex_vars.txt
+  fi
+  rm -f /tmp/source_regex_vars.txt /tmp/output_regex_vars.txt
+else
+  echo -e "\n2.2 Regex Preservation: skipped (compiled JSON not provided)"
+fi
+
 # 3. Row structure verification
 echo -e "\n3. Row Structure Verification:"
 SOURCE_ROWS=$(jq '[.panels[] | select(.type == "row")] | length' $INPUT_JSON)
@@ -233,6 +375,33 @@ else
   echo "⚠ WARNING: Row count mismatch"
   echo "Source row titles:"
   jq -r '.panels[] | select(.type == "row") | .title' $INPUT_JSON
+fi
+
+# 3.1 Row membership verification (optional; requires compiled JSON)
+if [ -n "$COMPILED_JSON" ] && [ -f "$COMPILED_JSON" ]; then
+  echo -e "\n3.1 Row Membership Verification (compiled JSON):"
+  MISSING_ROW_PANELS=$(jq -r '
+    [ .panels[] | select(.type=="row") | {title, y: .gridPos.y} ] as $rows
+    | [ .panels[] | select(.type!="row") | .gridPos.y ] as $ys
+    | $rows[]
+    | select(.y as $y | ($ys | index($y) | not))
+    | .title
+  ' $COMPILED_JSON | wc -l | tr -d ' ')
+
+  if [ "$MISSING_ROW_PANELS" -eq 0 ]; then
+    echo "✓ All rows have panels at matching Y"
+  else
+    echo "✗ WARNING: Rows without matching panels:"
+    jq -r '
+      [ .panels[] | select(.type=="row") | {title, y: .gridPos.y} ] as $rows
+      | [ .panels[] | select(.type!="row") | .gridPos.y ] as $ys
+      | $rows[]
+      | select(.y as $y | ($ys | index($y) | not))
+      | "\(.title) (y=\(.y))"
+    ' $COMPILED_JSON
+  fi
+else
+  echo -e "\n3.1 Row Membership Verification: skipped (compiled JSON not provided)"
 fi
 
 # Summary
@@ -250,7 +419,7 @@ Save this as `verify-conversion.sh`, make it executable, and run:
 
 ```bash
 chmod +x verify-conversion.sh
-./verify-conversion.sh input-dashboard.json mixin/application/dashboard.jsonnet
+./verify-conversion.sh input-dashboard.json mixin/application/dashboard.jsonnet /path/to/compiled-dashboard.json
 ```
 
 ## Step 6: Visual verification in Grafana

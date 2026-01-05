@@ -256,6 +256,11 @@ echo "Source: $SOURCE_VARS, Jsonnet: $JSONNET_VARS"
 # Must match
 ```
 
+Also verify:
+- No duplicate or extra variables.
+- Regex filters preserved (or added for high-cardinality labels).
+- Variables return values in Grafana (non-empty dropdowns).
+
 ### 3.6 Row structure and panel organization
 
 **CRITICAL: Rows organize panels in Grafana dashboards. Always preserve row structure.**
@@ -343,6 +348,11 @@ Consult `references/common-issues.md` for more error patterns.
 
 **CRITICAL: Run these validation scripts to ensure nothing is missing.**
 
+Additional checks to include:
+- Variables return values in Grafana; no duplicates or extras.
+- Regex filters preserved (or added when needed).
+- Row membership verified via compiled JSON (`gridPos.y` alignment).
+
 Create a validation script `verify-conversion.sh`:
 
 ```bash
@@ -413,7 +423,7 @@ echo -e "\n=== All validation checks passed! ==="
 Run the verification:
 ```bash
 chmod +x verify-conversion.sh
-./verify-conversion.sh
+./verify-conversion.sh input-dashboard.json mixin/application/dashboard.jsonnet /path/to/compiled-dashboard.json
 ```
 
 **If verification fails:**

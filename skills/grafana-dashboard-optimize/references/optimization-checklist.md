@@ -9,9 +9,16 @@
 ## Panel Level
 
 - Title is specific and includes units
-- Description explains context and thresholds
+- Title style is consistent across panels (prefixes/units/emoji rules)
+- Description explains context and thresholds (every panel has one)
 - Units and thresholds use `standards.*`
 - Legend is optimized for series count
+
+## Table Panels
+
+- Remove unused or redundant fields (IDs, raw labels, duplicate columns)
+- Apply unit/threshold overrides to key columns
+- Set column widths and sort order for scanability
 
 ## Query Level
 

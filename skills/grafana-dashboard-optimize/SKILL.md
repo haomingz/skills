@@ -38,9 +38,9 @@ Audit across these dimensions:
 1. **Panel semantics**: Missing/duplicated views, diagnostic coverage
 2. **Query optimization**: rate/increase usage, aggregation, cardinality
 3. **Variable design**: Names, defaults, cascading relationships
-4. **Visualization**: Panel types, units, thresholds, legends
+4. **Visualization**: Panel types, units, thresholds, legends, table field pruning
 5. **Layout**: Overview → symptoms → root cause flow
-6. **Titles/descriptions**: Clarity, context, troubleshooting hints
+6. **Titles/descriptions**: Unified title style, clarity, context, troubleshooting hints, every panel has a description
 7. **Proactive additions**: SLO/SLI, annotations, comparisons, runbooks
 
 For detailed audit checklist, see `references/optimization-checklist.md`.
@@ -72,17 +72,19 @@ For layout patterns, see `references/layout-guidelines.md`.
 Re-check:
 - Queries are efficient and bounded
 - Units and thresholds use `standards.*`
-- Panel titles and descriptions are specific
+- Panel titles are consistent in style and descriptions are present
 - Layout follows diagnostic flow
 - RED/USE/Golden Signals coverage is complete
+- Table panels remove unused fields and apply appropriate overrides/thresholds
 
 ## Quick optimization checklist
 
 - [ ] RED/USE/Golden Signals coverage is complete
 - [ ] Queries are efficient and bounded
 - [ ] Units and thresholds use `standards.*`
-- [ ] Panel titles and descriptions are specific
+- [ ] Panel titles are consistent and descriptions exist for every panel
 - [ ] Layout follows overview → symptoms → root cause
+- [ ] Table panels remove unused fields and add key overrides/thresholds
 
 ## Assessment report format
 

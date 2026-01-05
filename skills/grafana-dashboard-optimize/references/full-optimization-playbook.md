@@ -216,6 +216,11 @@ Legend guidance:
 - Small series count: standard legend
 - Large series count: compact or table legend
 
+Table optimization:
+- Remove unused columns (IDs, raw labels, duplicates).
+- Add unit/threshold overrides for key numeric fields.
+- Set column widths and sorting for scanability.
+
 #### Dimension 5: Layout and organization
 
 Audit questions:

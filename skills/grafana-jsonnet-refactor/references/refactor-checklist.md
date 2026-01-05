@@ -38,3 +38,6 @@
 - No raw JSON blobs remain.
 - `__inputs` / `__requires` are present when manual import is supported.
 - Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
+- Variables return values in Grafana; no duplicate or extra variables.
+- Regex filters preserved or added where needed.
+- Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).

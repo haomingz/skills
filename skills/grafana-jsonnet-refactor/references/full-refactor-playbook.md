@@ -112,6 +112,8 @@ Pass the correct datasource into each panel constructor and keep targets consist
 - Compile with `mixin/build.sh` or `mixin/build.ps1`.
 - Check variable interaction, panel rendering, and layout.
 - Compare metrics and calculations with the original dashboard.
+- Verify variables return values (no duplicates, regex preserved).
+- Verify row membership (panel `gridPos.y` aligns to row `gridPos.y`, and rows include panels).
 
 ## Common pitfalls
 

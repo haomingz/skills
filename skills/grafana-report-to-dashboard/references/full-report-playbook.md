@@ -186,6 +186,8 @@ local topErrors = panels.tablePanel(
 - Compile with `mixin/build.sh` or `mixin/build.ps1`.
 - Import into Grafana and compare against the original report for a known time window.
 - Verify that ES7/ES8 and ClickHouse results match expectations.
+- Verify variables return values (no duplicates, regex preserved).
+- Verify row membership (panel `gridPos.y` aligns to row `gridPos.y`, and rows include panels).
 
 ## Common pitfalls
 

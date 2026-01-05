@@ -77,6 +77,9 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count an
 - Queries use `prom.*` helpers where applicable.
 - No dashboard-specific lib files exist in final output.
 - Preserve `__inputs` / `__requires` and manual import lines when present.
+- Variables return values in Grafana; no duplicate or extra variables.
+- Regex filters preserved or added where needed.
+- Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
 
 ## Minimal single-file skeleton
 

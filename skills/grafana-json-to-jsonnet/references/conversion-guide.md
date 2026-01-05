@@ -41,3 +41,6 @@ python scripts/convert_grafana_json.py \
 - All panels use unified constructors (`panels.*`, `prom.*`, `standards.*`).
 - Units and thresholds are standardized.
 - No dashboard-specific libs remain.
+- Variables return values in Grafana; no duplicates or extras.
+- Regex filters are preserved (or added where needed).
+- Row membership is correct (panel `gridPos.y` aligns to row `gridPos.y` and rows include panels).

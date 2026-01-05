@@ -21,6 +21,7 @@ This guide summarizes how to convert Python report scripts into Grafana Jsonnet 
    - `config.datasources.elasticsearch` and `config.datasources.clickhouse`.
 4. Build panels with unified libs and explicit datasource selection.
 5. Compile and verify in Grafana.
+6. Verify variables return values (no duplicates, regex preserved) and rows manage panels correctly.
 
 ## Datasource config snippet
 

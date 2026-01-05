@@ -149,6 +149,10 @@ Required checks:
 - All variables converted and present
 - Row structure preserved
 - Dashboard renders correctly in Grafana
+- Variables return values in Grafana (non-empty dropdowns)
+- No duplicate or extra variables
+- Regex filters preserved or added where needed
+- Row membership verified (panel `gridPos.y` aligns to row `gridPos.y`, and rows include panels)
 
 **For verification scripts and detailed instructions**: See `references/verification-guide.md`
 
