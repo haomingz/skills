@@ -4,8 +4,10 @@ Use this document for the complete, detailed dashboard optimization workflow. It
 
 ## Contents
 
+- [Reference index (load as needed)](#reference-index-load-as-needed)
 - [Purpose](#purpose)
 - [Target users](#target-users)
+- [Common anti-patterns](#common-anti-patterns)
 - [Optimization framework](#optimization-framework)
   - [Phase 1: Understanding (required)](#phase-1-understanding-required)
   - [Phase 2: Seven-dimensional optimization](#phase-2-seven-dimensional-optimization)
@@ -14,6 +16,12 @@ Use this document for the complete, detailed dashboard optimization workflow. It
 - [References](#references)
 
 ---
+
+## Reference index (load as needed)
+
+- `references/observability-strategies.md` - RED/USE/Golden Signals selection guidance.
+- `references/query-optimization.md` - PromQL/SQL patterns and performance tips.
+- `references/report-template.md` - assessment report output template.
 
 ## Purpose
 
@@ -41,6 +49,20 @@ If applying Jsonnet edits, keep the existing file structure and align with grafa
 - DevOps teams tracking infrastructure
 - Development teams observing application performance
 - Management viewing high-level health metrics
+
+## Common anti-patterns
+
+- Metric soup (no narrative or troubleshooting flow)
+- Unbounded queries that explode cardinality
+- Missing error rate or latency percentiles
+- Random panel sizes with no hierarchy
+- Vague titles like "Metrics" or "Graph"
+
+Fixes:
+- Apply RED/USE systematically
+- Aggregate by meaningful labels
+- Rebuild layout around overview -> symptoms -> root cause
+- Rewrite titles to answer a specific question
 
 ## Optimization framework
 
@@ -219,6 +241,13 @@ local errorRateTrend = panels.timeseriesPanel(
 );
 ```
 
+Panel type selection:
+- Stat: single current value
+- Timeseries: trend over time
+- Table: top-N or breakdowns
+- Bar gauge: comparisons across categories
+- Heatmap: distributions
+
 Legend guidance:
 - Single series: hide legend
 - Small series count: standard legend
@@ -249,6 +278,14 @@ Recommended flow:
 - Overview -> Symptoms -> Root cause
 - Left-to-right importance within rows
 - Use collapsed rows for deep-dive sections
+
+Row usage:
+- Use `panels.rowPanel` and collapse detailed sections.
+- Keep overview row visible by default.
+
+Grid tips:
+- Use consistent widths (6, 8, 12, 24).
+- Put critical metrics top-left.
 
 Row membership checks:
 - Panels align to their row `gridPos.y`.
@@ -337,6 +374,7 @@ Panel level:
 - Correct panel type and units
 - Meaningful thresholds
 - Legend tuned for series count
+- Table panels remove unused fields and apply overrides (thresholds, colors, widths, cell types)
 
 Query level:
 - Efficient queries and aggregations
@@ -352,8 +390,4 @@ Observability level:
 Use these for deeper guidance:
 - `references/observability-strategies.md`
 - `references/query-optimization.md`
-- `references/visualization-guidelines.md`
-- `references/layout-guidelines.md`
-- `references/optimization-checklist.md`
 - `references/report-template.md`
-- `references/anti-patterns.md`

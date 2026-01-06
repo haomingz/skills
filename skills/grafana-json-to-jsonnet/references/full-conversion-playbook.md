@@ -4,6 +4,8 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 
 ## Contents
 
+- [Reference index (load as needed)](#reference-index-load-as-needed)
+- [Quick start (summary)](#quick-start-summary)
 - [Critical requirements](#critical-requirements)
 - [Conversion philosophy](#conversion-philosophy)
 - [Step 1: Review conventions](#step-1-review-conventions)
@@ -19,13 +21,33 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 
 ---
 
+## Reference index (load as needed)
+
+- `references/lib-api-reference.md` - unified library APIs and examples.
+- `references/mapping.md` - panel/target mapping from JSON -> unified libs.
+- `references/verification-guide.md` - inventory and verification scripts.
+- `references/common-issues.md` - compilation/runtime troubleshooting patterns.
+- `references/examples.md` - detailed input -> output examples (open only when needed).
+
+## Quick start (summary)
+
+1. Review conventions (import order, config block, naming, UID rule).
+2. Inventory the source JSON (panels, rows, variables, datasources).
+3. Create datasource + config block (provisioning + manual import).
+4. Convert panels using `panels.*Panel()` and helper libs.
+5. Preserve rows and align panel `gridPos.y` to row `gridPos.y`.
+6. Convert variables with `g.dashboard.variable.*`.
+7. Assemble dashboard with `__inputs` / `__requires`.
+8. Compile and verify completeness (counts, rows, variables).
+
 ## Critical requirements
 
 1. Convert all panels, variables, and configurations to Jsonnet using unified libraries.
 2. Generate a single self-contained Jsonnet file (no dashboard-specific lib files).
 3. Modernize legacy panel types and deprecated options.
-4. Only modify `mixin/lib/*.libsonnet` for truly reusable components.
-5. Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
+4. Regenerate dashboard UID from the dashboard name (do not reuse source UID).
+5. Only modify `mixin/lib/*.libsonnet` for truly reusable components.
+6. Do not run `jsonnet fmt` / `jsonnetfmt` on generated Jsonnet files.
 
 ## Conversion philosophy
 
@@ -36,10 +58,15 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 
 ## Step 1: Review conventions
 
-Read:
-- `references/style-guide.md`
-- `references/best-practices.md`
-- `references/lib-api-reference.md`
+Use these conventions:
+
+- Import order and config block: follow the skeleton in Step 3.1.
+- Naming: lowerCamelCase for locals; dashboard UID uses hyphen-case derived from name.
+- Unified libs: `panels.*`, `prom.*`, `standards.*`, `themes.*`, `layouts.*`.
+- Row structure: rows are explicit; panel `gridPos.y` matches row `gridPos.y`.
+- Formatting: do not run `jsonnet fmt` / `jsonnetfmt`.
+
+See `references/lib-api-reference.md` and `references/mapping.md` for API details.
 
 ## Step 2: Analyze the export JSON and create inventory
 
@@ -474,6 +501,7 @@ Do not add dashboard-specific helpers to global libs.
 - All units and thresholds use `standards.*`.
 - Queries use `prom.*` helpers where possible.
 - Variables use `g.dashboard.variable.*` APIs.
+- Dashboard UID is regenerated from the dashboard name.
 - No dashboard-specific lib files or raw JSON panels remain.
 
 ## Optional scaffold script
@@ -483,6 +511,4 @@ Use it only as a scratchpad: inline all panels and variables into a single file 
 
 ## Examples
 
-- `references/input-dashboard.json`
-- `references/output-dashboard.jsonnet`
-- `references/output-panels.libsonnet` (reference only)
+- `references/examples.md` (input -> output walkthroughs)

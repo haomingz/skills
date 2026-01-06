@@ -43,7 +43,7 @@ Audit across these dimensions:
 6. **Titles/descriptions**: Unified title style, clarity, context, troubleshooting hints, every panel has a description
 7. **Proactive additions**: SLO/SLI, annotations, comparisons, runbooks
 
-For detailed audit checklist, see `references/optimization-checklist.md`.
+For the full audit checklist and visualization/layout guidance, see `references/full-optimization-playbook.md`.
 For observability strategies (RED/USE/Golden Signals), see `references/observability-strategies.md`.
 
 **Step 3: Produce prioritized recommendations**
@@ -65,8 +65,6 @@ If user approves changes:
 - For **table** panels, use the `panels` lib (no raw Grafonnet) and follow the detailed table guidance in `references/full-optimization-playbook.md`.
 
 For query optimization patterns, see `references/query-optimization.md`.
-For visualization guidelines, see `references/visualization-guidelines.md`.
-For layout patterns, see `references/layout-guidelines.md`.
 
 **Step 5: Validate improvements**
 
@@ -136,8 +134,4 @@ Use this structure for recommendations:
 - `references/full-optimization-playbook.md` for the complete framework
 - `references/observability-strategies.md` for RED/USE/Golden Signals
 - `references/query-optimization.md` for PromQL/SQL guidance
-- `references/visualization-guidelines.md` for panel selection, units, legends
-- `references/layout-guidelines.md` for row and grid patterns
-- `references/optimization-checklist.md` for detailed audit checklist
 - `references/report-template.md` for the assessment report format
-- `references/anti-patterns.md` for common pitfalls

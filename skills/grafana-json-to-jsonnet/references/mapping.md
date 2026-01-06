@@ -33,23 +33,7 @@ clickhouse.sqlTarget(
 )
 ```
 
-## Unit Mapping (Common)
-
-- `reqps` -> `standards.units.qps`
-- `percentunit` -> `standards.units.percent01`
-- `percent` -> `standards.units.percent100`
-- `s` -> `standards.units.seconds`
-- `ms` -> `standards.units.milliseconds`
-- `bytes` -> `standards.units.bytes`
-- `short` -> `standards.units.count`
-
-## Thresholds (Examples)
-
-- Error rate -> `standards.thresholds.errorRate`
-- Success rate -> `standards.thresholds.successRate`
-- Latency (seconds) -> `standards.thresholds.latencySeconds`
-- Latency (ms) -> `standards.thresholds.latencyMilliseconds`
-- Neutral/blue -> `standards.thresholds.neutral`
+Use `standards.units.*` and `standards.thresholds.*` from `references/lib-api-reference.md`.
 
 ## Unsupported panels
 

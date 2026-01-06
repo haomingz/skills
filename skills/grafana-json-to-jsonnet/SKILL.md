@@ -189,15 +189,9 @@ Required checks:
 
 ## References (load as needed)
 
-- `references/conversion-guide.md`
 - `references/full-conversion-playbook.md`
-- `references/style-guide.md`
-- `references/best-practices.md`
 - `references/lib-api-reference.md`
 - `references/mapping.md`
-- `references/common-issues.md`
-- `references/input-dashboard.json`
-- `references/output-dashboard.jsonnet`
-- `references/output-panels.libsonnet`
-- `references/output-raw-variables.json`
 - `references/verification-guide.md`
+- `references/common-issues.md`
+- `references/examples.md`
