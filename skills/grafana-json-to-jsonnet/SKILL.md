@@ -195,3 +195,4 @@ Required checks:
 - `references/verification-guide.md`
 - `references/common-issues.md`
 - `references/examples.md`
+- `references/style-and-practices.md`

@@ -28,6 +28,7 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 - `references/verification-guide.md` - inventory and verification scripts.
 - `references/common-issues.md` - compilation/runtime troubleshooting patterns.
 - `references/examples.md` - detailed input -> output examples (open only when needed).
+- `references/style-and-practices.md` - merged style guide and best practices.
 
 ## Quick start (summary)
 
@@ -66,7 +67,7 @@ Use these conventions:
 - Row structure: rows are explicit; panel `gridPos.y` matches row `gridPos.y`.
 - Formatting: do not run `jsonnet fmt` / `jsonnetfmt`.
 
-See `references/lib-api-reference.md` and `references/mapping.md` for API details.
+See `references/style-and-practices.md` for full conventions, and `references/lib-api-reference.md` / `references/mapping.md` for API details.
 
 ## Step 2: Analyze the export JSON and create inventory
 
