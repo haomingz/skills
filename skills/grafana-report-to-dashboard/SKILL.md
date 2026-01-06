@@ -44,7 +44,7 @@ Use this mapping:
 - Top-N rankings → `panels.tablePanel`
 - Comparisons → `panels.barGaugePanel` or timeseries with bars theme
 
-For detailed mapping examples, see `references/report-migration-guide.md`.
+For detailed mapping examples, see `references/examples.md`.
 
 **Step 4: Define dual datasource configuration**
 
@@ -136,8 +136,5 @@ local requestsPanel = panels.timeseriesPanel(
 ## References (load as needed)
 
 - `references/datasource-mapping.md`
-- `references/report-migration-guide.md`
 - `references/full-report-playbook.md`
-- `references/example-report.py`
-- `references/example-dashboard.jsonnet`
-- `references/example-dashboard-lib.libsonnet`
+- `references/examples.md`

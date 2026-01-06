@@ -4,17 +4,34 @@ This playbook provides detailed steps and patterns for refactoring Grafana Jsonn
 
 ## Contents
 
+- [Reference index (load as needed)](#reference-index-load-as-needed)
+- [Quick start (summary)](#quick-start-summary)
 - [Goals and constraints](#goals-and-constraints)
 - [Step 1: Audit the current dashboard](#step-1-audit-the-current-dashboard)
 - [Step 2: Decide the structure](#step-2-decide-the-structure)
 - [Step 3: Normalize config and selectors](#step-3-normalize-config-and-selectors)
 - [Step 4: Extract local helpers](#step-4-extract-local-helpers)
-- [Step 5: Refactor panels](#step-5-refactor-panels)
-- [Step 6: Modernize legacy types](#step-6-modernize-legacy-types)
-- [Step 7: Compile and verify](#step-7-compile-and-verify)
+- [Step 5: Keep the file organized](#step-5-keep-the-file-organized)
+- [Step 6: Replace raw Grafonnet blocks](#step-6-replace-raw-grafonnet-blocks)
+- [Step 7: Multi-datasource refactor (when needed)](#step-7-multi-datasource-refactor-when-needed)
+- [Step 8: Verify behavior](#step-8-verify-behavior)
 - [Quality checks](#quality-checks)
 
 ---
+
+## Reference index (load as needed)
+
+- `references/refactor-checklist.md` - quick checklist for conventions and validation.
+- `references/examples.md` - before/after examples and optional lib helper.
+
+## Quick start (summary)
+
+1. Review conventions in `references/refactor-checklist.md`.
+2. Inventory panels, variables, datasources, and row structure.
+3. Normalize config and shared selectors.
+4. Replace raw Grafonnet with unified `panels.*` constructors.
+5. Preserve layout and row membership (`gridPos.y` matches row `gridPos.y`).
+6. Compile and verify behavior in Grafana.
 
 ## Goals and constraints
 

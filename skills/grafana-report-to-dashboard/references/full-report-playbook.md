@@ -4,6 +4,8 @@ Use this document to migrate Python report scripts into Grafana Jsonnet dashboar
 
 ## Contents
 
+- [Reference index (load as needed)](#reference-index-load-as-needed)
+- [Quick start (summary)](#quick-start-summary)
 - [Goals and constraints](#goals-and-constraints)
 - [Step 1: Analyze the report script](#step-1-analyze-the-report-script)
 - [Step 2: Define dashboard structure](#step-2-define-dashboard-structure)
@@ -15,6 +17,19 @@ Use this document to migrate Python report scripts into Grafana Jsonnet dashboar
 - [Quality checklist](#quality-checklist)
 
 ---
+
+## Reference index (load as needed)
+
+- `references/datasource-mapping.md` - Elasticsearch and ClickHouse target patterns.
+- `references/examples.md` - end-to-end examples from report script to dashboard.
+
+## Quick start (summary)
+
+1. Extract report queries, filters, and post-processing logic.
+2. Map report sections to panels (stat, timeseries, table).
+3. Define dual datasources and manual import support.
+4. Build panels with explicit datasource selection.
+5. Preserve calculations and verify in Grafana.
 
 ## Goals and constraints
 
@@ -48,6 +63,8 @@ Mapping checklist:
 - Each report section has a corresponding panel
 - Panel titles match report section names
 - Ordering follows the report narrative
+
+See `references/examples.md` for mapping and output examples.
 
 ## Step 3: Configure dual datasources
 
@@ -196,3 +213,7 @@ local topErrors = panels.tablePanel(
 - Losing report context (labels, section titles, or ordering).
 - Ignoring Python post-processing logic that affects results.
 - Creating dashboard-specific lib files instead of local helpers.
+
+## Examples
+
+- `references/examples.md`

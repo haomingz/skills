@@ -115,9 +115,6 @@ g.dashboard.new('Dashboard')
 
 ## References (load as needed)
 
-- `references/refactor-guide.md`
 - `references/full-refactor-playbook.md`
 - `references/refactor-checklist.md`
-- `references/example-before.jsonnet`
-- `references/example-after-dashboard.jsonnet`
-- `references/example-after-lib.libsonnet`
+- `references/examples.md`
