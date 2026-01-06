@@ -27,6 +27,7 @@ Conversion Progress:
 **Step 1: Analyze source JSON and create inventory**
 
 Count all elements in the source JSON (panels, variables, rows). See `references/verification-guide.md` for inventory scripts.
+Capture the dashboard title and generate a **new UID derived from the name** (do not reuse the source UID).
 
 **Step 2: Convert variables**
 
@@ -64,6 +65,12 @@ If verification fails, return to the appropriate step, add missing elements, rec
 - Use `${DS_*}` for datasource UID in manual import mode.
 - Add `__inputs` and `__requires` so Grafana can prompt for datasources.
 - Keep provisioning mode (real UID) as the default line, and comment the manual line.
+
+## UID generation (required)
+
+- Always create a **new** dashboard UID based on the dashboard name.
+- Prefer a stable, name-derived UID (e.g., slugified name), and keep it concise (Grafana UID max length is 40).
+- Do not carry over the source export UID.
 
 ## Row structure preservation
 
@@ -117,6 +124,7 @@ local qpsStat = panels.statPanel(
 );
 
 g.dashboard.new('Dashboard Name')
++ g.dashboard.withUid('dashboard-name')
 + g.dashboard.withPanels([qpsStat])
 ```
 
@@ -164,6 +172,7 @@ Required checks:
 - [ ] All panels use `panels.*Panel()` and helper libs (`prom.*`, `standards.*`, `themes.*`)
 - [ ] Units and thresholds use `standards.*`
 - [ ] Legacy panels modernized (`graph` -> `timeseries`, `singlestat` -> `stat`)
+- [ ] Dashboard UID is regenerated from the dashboard name (no UID reuse)
 - [ ] No dashboard-specific lib files or raw JSON panels remain
 
 **Functional completeness:**

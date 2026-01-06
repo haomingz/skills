@@ -224,10 +224,20 @@ Legend guidance:
 - Small series count: standard legend
 - Large series count: compact or table legend
 
-Table optimization:
-- Remove unused columns (IDs, raw labels, duplicates).
-- Add unit/threshold overrides for key numeric fields.
-- Set column widths and sorting for scanability.
+Table panels (required):
+- Use the `panels` library for table panel creation and field overrides (avoid raw Grafonnet or inline JSON).
+- Color + thresholds: configure thresholds for key numeric/status fields and bind colors explicitly (e.g., green/yellow/red) so status and risk stand out.
+- Column widths: set widths or min widths for high-signal columns; allow low-signal columns to auto-size or be hidden.
+- Cell types by data type:
+  - Timestamp/time: time cell type and appropriate time format.
+  - Duration/latency: numeric with time unit (`ms`, `s`) and thresholds.
+  - Percent/ratio: percent cell type with thresholds.
+  - Counts/metrics: numeric with unit and thresholds when meaningful.
+  - Boolean: boolean or pill cell type.
+  - Enum/status strings: pill or colored text cell type with thresholds.
+  - Free text: plain string; avoid coloring unless it encodes status.
+- Default hidden fields: rely on the panels lib defaults and verify they are applied; override in the lib only when required.
+- Extra improvements: consider default sort on the most critical column, reduce row limit for readability, and remove fields that are never used in troubleshooting.
 
 #### Dimension 5: Layout and organization
 

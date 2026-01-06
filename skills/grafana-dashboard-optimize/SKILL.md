@@ -62,6 +62,7 @@ If user approves changes:
 - Keep code structure changes minimal (content-only optimization)
 - Include Jsonnet snippets for high-impact changes
 - Match grafana-code mixin structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
+- For **table** panels, use the `panels` lib (no raw Grafonnet) and follow the detailed table guidance in `references/full-optimization-playbook.md`.
 
 For query optimization patterns, see `references/query-optimization.md`.
 For visualization guidelines, see `references/visualization-guidelines.md`.
@@ -75,7 +76,7 @@ Re-check:
 - Panel titles are consistent in style and descriptions are present
 - Layout follows diagnostic flow
 - RED/USE/Golden Signals coverage is complete
-- Table panels remove unused fields and apply appropriate overrides/thresholds
+- Table panels remove unused fields and apply table optimization guidance (overrides/thresholds, colors, widths, cell types)
 - Variables return values in Grafana (non-empty dropdowns)
 - No duplicate or extra variables after cleanup
 - Regex filters preserved or added where needed for variable values
@@ -88,7 +89,7 @@ Re-check:
 - [ ] Units and thresholds use `standards.*`
 - [ ] Panel titles are consistent and descriptions exist for every panel
 - [ ] Layout follows overview → symptoms → root cause
-- [ ] Table panels remove unused fields and add key overrides/thresholds
+- [ ] Table panels remove unused fields and apply table optimization guidance (overrides/thresholds, colors, widths, cell types)
 - [ ] Variables return values and have no duplicates/extras
 - [ ] Regex filters preserved or added when needed
 - [ ] Row membership is correct
