@@ -419,7 +419,7 @@ Save this as `verify-conversion.sh`, make it executable, and run:
 
 ```bash
 chmod +x verify-conversion.sh
-./verify-conversion.sh input-dashboard.json mixin/application/dashboard.jsonnet /path/to/compiled-dashboard.json
+./verify-conversion.sh input-dashboard.json <output-dir>/dashboard.jsonnet /path/to/compiled-dashboard.json
 ```
 
 ## Step 6: Visual verification in Grafana

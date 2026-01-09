@@ -27,6 +27,7 @@ Refactor Progress:
 **Step 1: Read refactor-checklist.md**
 
 Load `references/refactor-checklist.md` to understand grafana-code conventions and standards.
+If the dashboard belongs to a specific repo or stack, review the local Jsonnet defaults and docs in the working directory (datasource config, time range, variables, panel types).
 
 **Step 2: Audit the dashboard**
 
@@ -46,6 +47,7 @@ Extract common configuration (datasource, pluginVersion, timezone) into a `confi
 **Step 5: Replace panels with unified constructors**
 
 Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds and `themes.*` for timeseries styling. Add `id` and `gridPos` via `panels.withIdAndPatches(...)` or `+ { id, gridPos }`. Remove duplicated helper functions.
+For styling and table/override patterns, load `references/visual-style-guides.md`.
 
 **Step 6: Organize file structure**
 
@@ -115,6 +117,7 @@ g.dashboard.new('Dashboard')
 
 ## References (load as needed)
 
+- `references/visual-style-guides.md`
 - `references/full-refactor-playbook.md`
 - `references/refactor-checklist.md`
 - `references/examples.md`

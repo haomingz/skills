@@ -28,6 +28,7 @@ Conversion Progress:
 
 Count all elements in the source JSON (panels, variables, rows). See `references/verification-guide.md` for inventory scripts.
 Capture the dashboard title and generate a **new UID derived from the name** (do not reuse the source UID).
+If the dashboard belongs to a specific repo or stack, review the local Jsonnet defaults and docs in the working directory (datasource config, time range, panel types, variables) before converting.
 
 **Step 2: Convert variables**
 
@@ -59,6 +60,7 @@ If verification fails, return to the appropriate step, add missing elements, rec
 - `singlestat` -> `stat`
 - Prefer `standards.legend.*` and `themes.timeseries.*`
 - Use newer tooltip modes and legend placements
+- For repo-specific styling and table patterns, load `references/visual-style-guides.md`.
 
 ## Manual import support
 
@@ -189,6 +191,7 @@ Required checks:
 
 ## References (load as needed)
 
+- `references/visual-style-guides.md`
 - `references/full-conversion-playbook.md`
 - `references/lib-api-reference.md`
 - `references/mapping.md`

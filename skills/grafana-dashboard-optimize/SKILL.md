@@ -31,6 +31,7 @@ Before any edits, document:
 - Row structure and panel organization
 
 See `references/full-optimization-playbook.md` for detailed context gathering.
+If optimizing dashboards in a specific repo or stack, review local Jsonnet defaults and docs in the working directory for current conventions.
 
 **Step 2: Run seven-dimensional content audit**
 
@@ -45,6 +46,7 @@ Audit across these dimensions:
 
 For the full audit checklist and visualization/layout guidance, see `references/full-optimization-playbook.md`.
 For observability strategies (RED/USE/Golden Signals), see `references/observability-strategies.md`.
+For color, thresholds, and table styling aligned with local repo conventions, see `references/visual-style-guides.md`.
 
 **Step 3: Produce prioritized recommendations**
 
@@ -131,6 +133,7 @@ Use this structure for recommendations:
 
 ## References (load as needed)
 
+- `references/visual-style-guides.md`
 - `references/full-optimization-playbook.md` for the complete framework
 - `references/observability-strategies.md` for RED/USE/Golden Signals
 - `references/query-optimization.md` for PromQL/SQL guidance

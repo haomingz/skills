@@ -74,6 +74,40 @@ panels.tablePanel(
 )
 ```
 
+### Styling helpers (stylize, overrides, transforms)
+
+Use these helpers to keep styling consistent with local repo conventions.
+
+```jsonnet
+// Timeseries stylize by legend/series name
+local panel = panels.timeseriesPanel(...)
++ panels.timeSeriesStylizeByName.rate('QPS')
++ panels.timeSeriesStylizeByName.errors('5xx')
++ panels.timeSeriesStylizeByName.duration('P99');
+
+// Stat/table stylize (only when thresholds/colors are not explicitly set)
+local stat = panels.statPanel(...) + panels.statStylize.errors();
+local table = panels.tablePanel(...) + panels.tableStylizeByName.rate('QPS');
+
+// Timeseries overrides (style/axis/points)
+local panel2 = panels.timeseriesPanel(...)
++ panels.timeSeriesOverrides.dashedByName('CPU 核数', dash=[8, 8])
++ panels.timeSeriesOverrides.axisRightByName('使用率', unit=standards.units.percent100);
+
+// Table transforms and overrides
+local transforms = [
+  panels.tableTransforms.labelsToFields,
+  panels.tableTransforms.seriesToColumns('instance'),
+  panels.tableTransforms.filterInclude('/^Value #|^instance$/'),
+];
+
+local overrides = [
+  panels.tableOverrides.fixedColorText('Service', helpers.colors.blue),
+  panels.tableOverrides.gaugePercentByName('CPU 使用率', width=120),
+  panels.tableOverrides.thresholdBackground('错误率', standards.presets.thresholds.errorRatePercent),
+];
+```
+
 ### rowPanel - Row Separator
 ```jsonnet
 panels.rowPanel(

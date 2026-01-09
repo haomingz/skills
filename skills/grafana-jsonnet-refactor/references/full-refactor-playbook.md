@@ -23,6 +23,7 @@ This playbook provides detailed steps and patterns for refactoring Grafana Jsonn
 
 - `references/refactor-checklist.md` - quick checklist for conventions and validation.
 - `references/examples.md` - before/after examples and optional lib helper.
+- `references/visual-style-guides.md` - style/threshold/table conventions.
 
 ## Quick start (summary)
 

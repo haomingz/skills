@@ -22,6 +22,7 @@ Use this document for the complete, detailed dashboard optimization workflow. It
 - `references/observability-strategies.md` - RED/USE/Golden Signals selection guidance.
 - `references/query-optimization.md` - PromQL/SQL patterns and performance tips.
 - `references/report-template.md` - assessment report output template.
+- `references/visual-style-guides.md` - color/threshold/style/table conventions.
 
 ## Purpose
 

@@ -40,10 +40,12 @@ local DATASOURCE_UID = 'prometheus-thanos';
 local config = {
   datasource: { type: 'prometheus', uid: DATASOURCE_UID },
   timezone: 'browser',
-  timeFrom: 'now-6h',
+  timeFrom: 'now-24h',
   timeTo: 'now',
   pluginVersion: '12.3.0',
 };
+
+// For log-heavy dashboards (nginx log / nginx vts), prefer now-6h ~ now.
 
 local qpsStat = panels.statPanel(
   title='QPS',

@@ -29,6 +29,7 @@ Use this document for end-to-end conversion details, examples, and edge cases.
 - `references/common-issues.md` - compilation/runtime troubleshooting patterns.
 - `references/examples.md` - detailed input -> output examples (open only when needed).
 - `references/style-and-practices.md` - merged style guide and best practices.
+- `references/visual-style-guides.md` - style/threshold/table conventions.
 
 ## Quick start (summary)
 
@@ -387,7 +388,7 @@ Create a validation script `verify-conversion.sh`:
 #!/bin/bash
 
 INPUT_JSON="input-dashboard.json"
-OUTPUT_JSONNET="mixin/application/dashboard.jsonnet"
+OUTPUT_JSONNET="<output-dir>/dashboard.jsonnet"
 
 echo "=== Conversion Completeness Verification ==="
 
@@ -451,7 +452,7 @@ echo -e "\n=== All validation checks passed! ==="
 Run the verification:
 ```bash
 chmod +x verify-conversion.sh
-./verify-conversion.sh input-dashboard.json mixin/application/dashboard.jsonnet /path/to/compiled-dashboard.json
+./verify-conversion.sh input-dashboard.json <output-dir>/dashboard.jsonnet /path/to/compiled-dashboard.json
 ```
 
 **If verification fails:**
