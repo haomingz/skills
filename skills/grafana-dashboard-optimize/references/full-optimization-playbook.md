@@ -41,7 +41,7 @@ What this skill does not do:
 - Code style formatting
 - Automated formatting via `jsonnetfmt`
 
-If applying Jsonnet edits, keep the existing file structure and align with grafana-code mixin style (unified libs, config object, row structure).
+If applying Jsonnet edits, keep the existing file structure and align with repo conventions (unified libs when present, config object, row structure, metadata blocks).
 
 ## Target users
 
@@ -82,6 +82,8 @@ Before making changes, document the following:
 - Datasources used
 - Default time range and refresh interval
 - Existing variables and interactions
+- Dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`) and annotations
+- Existing helper/wrapper patterns and plugin version
 
 3) Semantic understanding
 - What does each row represent in the troubleshooting flow?
@@ -182,6 +184,7 @@ Checklist:
 - Use reasonable range vectors based on scrape interval
 - Aggregate by meaningful labels only
 - Prefer recording rules for expensive calculations
+- If a Prometheus helper library exists, prefer its helpers for rate/increase, quantiles, and error/success rates.
 
 #### Dimension 3: Variables (template variables)
 
@@ -192,6 +195,13 @@ Audit questions:
 - Do variable dropdowns return values in Grafana?
 - Are there duplicate or unused variables?
 - Do variable values need regex filtering to remove noise?
+
+Guidance:
+- Preserve `includeAll`, `multi`, `allValue`, and refresh mode (`onLoad` vs `onTime`).
+- Keep default selections consistent with operational expectations.
+- Maintain cascade order and selector usage (variables referenced by later queries).
+- Keep regex filters for high-cardinality labels; add only if needed to reduce noise.
+- If a variable helper exists, use it to generate label variables consistently.
 
 Example:
 
@@ -258,6 +268,7 @@ Table panels (required):
 - Use the `panels` library for table panel creation and field overrides (avoid raw Grafonnet or inline JSON).
 - Color + thresholds: configure thresholds for key numeric/status fields and bind colors explicitly (e.g., green/yellow/red) so status and risk stand out.
 - Column widths: set widths or min widths for high-signal columns; allow low-signal columns to auto-size or be hidden.
+- Transform order matters: apply row/series transforms first, then organize/rename, then overrides.
 - Cell types by data type:
   - Timestamp/time: time cell type and appropriate time format.
   - Duration/latency: numeric with time unit (`ms`, `s`) and thresholds.
@@ -268,6 +279,7 @@ Table panels (required):
   - Free text: plain string; avoid coloring unless it encodes status.
 - Default hidden fields: rely on the panels lib defaults and verify they are applied; override in the lib only when required.
 - Extra improvements: consider default sort on the most critical column, reduce row limit for readability, and remove fields that are never used in troubleshooting.
+- Use helper transforms/overrides (if available) for consistent table styling.
 
 #### Dimension 5: Layout and organization
 
@@ -283,10 +295,13 @@ Recommended flow:
 Row usage:
 - Use `panels.rowPanel` and collapse detailed sections.
 - Keep overview row visible by default.
+- Preserve repeat panels and their repeat variables; keep `maxPerRow` consistent.
 
 Grid tips:
 - Use consistent widths (6, 8, 12, 24).
 - Put critical metrics top-left.
+- Keep row `gridPos.y` aligned with the first panel in that row to avoid overlap.
+- Use layout helpers when available to keep grid sizing consistent.
 
 Row membership checks:
 - Panels align to their row `gridPos.y`.
@@ -363,6 +378,7 @@ Dashboard level:
 - Appropriate default time range and refresh
 - Variables for key dimensions
 - Annotations for deployments/incidents
+- Dashboard metadata blocks preserved (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`)
 
 Row level:
 - Logical grouping and ordering

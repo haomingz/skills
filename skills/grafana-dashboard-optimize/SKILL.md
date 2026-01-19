@@ -29,6 +29,7 @@ Before any edits, document:
 - Current monitoring strategy and key questions it should answer
 - Datasources, variables, time range settings
 - Row structure and panel organization
+- Existing helper/wrapper patterns, annotations, dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`), and pluginVersion
 
 See `references/full-optimization-playbook.md` for detailed context gathering.
 If optimizing dashboards in a specific repo or stack, review local Jsonnet defaults and docs in the working directory for current conventions.
@@ -42,7 +43,7 @@ Audit across these dimensions:
 4. **Visualization**: Panel types, units, thresholds, legends, table field pruning
 5. **Layout**: Overview → symptoms → root cause flow
 6. **Titles/descriptions**: Unified title style, clarity, context, troubleshooting hints, every panel has a description
-7. **Proactive additions**: SLO/SLI, annotations, comparisons, runbooks
+7. **Proactive additions**: SLO/SLI, annotations, comparisons, runbooks, dashboard metadata parity
 
 For the full audit checklist and visualization/layout guidance, see `references/full-optimization-playbook.md`.
 For observability strategies (RED/USE/Golden Signals), see `references/observability-strategies.md`.
@@ -60,10 +61,13 @@ Include rationale and expected impact for each recommendation. Use template in `
 **Step 4: Apply changes (if requested)**
 
 If user approves changes:
-- Use unified libraries from `mixin/lib/` (`panels`, `standards`, `themes`)
+- Use available unified libraries when present (commonly `panels`, `standards`, `themes`)
 - Keep code structure changes minimal (content-only optimization)
 - Include Jsonnet snippets for high-impact changes
-- Match grafana-code mixin structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
+- Preserve datasource selection patterns and any `__inputs` / `__requires` blocks if present
+- Preserve `schemaVersion`, `graphTooltip`, `version`, and `pluginVersion` when present
+- Keep existing wrapper/helper patterns unless the user explicitly requests refactor
+- Match existing repo/dashboard structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
 - For **table** panels, use the `panels` lib (no raw Grafonnet) and follow the detailed table guidance in `references/full-optimization-playbook.md`.
 
 For query optimization patterns, see `references/query-optimization.md`.
@@ -79,6 +83,7 @@ Re-check:
 - Table panels remove unused fields and apply table optimization guidance (overrides/thresholds, colors, widths, cell types)
 - Variables return values in Grafana (non-empty dropdowns)
 - No duplicate or extra variables after cleanup
+- `__inputs` / `__requires`, annotations, and dashboard metadata remain valid and intentional
 - Regex filters preserved or added where needed for variable values
 - Row membership is correct (panels align to row `gridPos.y` and rows include panels)
 

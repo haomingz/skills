@@ -110,12 +110,12 @@ baseDashboard {
 }
 ```
 
-## Example 3: Optional reusable helper (mixin/lib)
+## Example 3: Optional reusable helper (shared lib)
 
-Only create `mixin/lib` helpers when they are reused across dashboards. Otherwise keep helpers local.
+Only create shared lib helpers when they are reused across dashboards. Otherwise keep helpers local.
 
 ```jsonnet
-// Example reusable helper for mixin/lib (only if shared across dashboards).
+// Example reusable helper for a shared lib (only if shared across dashboards).
 // Do not create dashboard-specific lib files.
 local g = import 'github.com/grafana/grafonnet/gen/grafonnet-latest/main.libsonnet';
 local layouts = import './layouts.libsonnet';

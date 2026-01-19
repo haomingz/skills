@@ -1,11 +1,11 @@
 ---
 name: grafana-jsonnet-refactor
-description: Refactors Grafana Jsonnet dashboards to eliminate duplication and align with grafana-code unified libraries while preserving behavior. Use when dashboards contain duplicated code, inconsistent patterns, legacy panel types, or need standardization with mixin conventions. Produces single self-contained files without dashboard-specific libraries.
+description: Refactors Grafana Jsonnet dashboards to eliminate duplication and align with available unified libraries while preserving behavior. Use when dashboards contain duplicated code, inconsistent patterns, legacy panel types, or need standardization with existing conventions. Produces single self-contained files without dashboard-specific libraries.
 ---
 
 # Grafana Jsonnet Refactor
 
-Eliminate duplication and align existing Jsonnet dashboards with grafana-code unified libraries. Preserve behavior while modernizing legacy panels and standardizing patterns.
+Eliminate duplication and align existing Jsonnet dashboards with available unified libraries. Preserve behavior while modernizing legacy panels and standardizing patterns.
 
 **Not suitable for**: Initial JSON to Jsonnet conversion (use `grafana-json-to-jsonnet`), content optimization (use `grafana-dashboard-optimize`), or Python report migration (use `grafana-report-to-dashboard`).
 
@@ -20,18 +20,18 @@ Refactor Progress:
 - [ ] Step 3: Choose refactor mode (direct/wrapper/hybrid)
 - [ ] Step 4: Normalize config and shared selectors
 - [ ] Step 5: Replace panels with unified constructors
-- [ ] Step 6: Organize file structure (imports → config → variables → panels → dashboard)
+- [ ] Step 6: Organize file structure (imports → config → variables/helpers → panels → rows → dashboard)
 - [ ] Step 7: Compile and verify in Grafana
 ```
 
 **Step 1: Read refactor-checklist.md**
 
-Load `references/refactor-checklist.md` to understand grafana-code conventions and standards.
+Load `references/refactor-checklist.md` to understand local conventions and standards.
 If the dashboard belongs to a specific repo or stack, review the local Jsonnet defaults and docs in the working directory (datasource config, time range, variables, panel types).
 
 **Step 2: Audit the dashboard**
 
-List all panels, variables, datasources, and identify repeated patterns. Note which panels use local helpers vs unified libraries.
+List all panels, variables, datasources, and identify repeated patterns. Note which panels use local helpers vs unified libraries, and whether annotations or dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`) are present.
 
 **Step 3: Choose refactor mode**
 
@@ -42,7 +42,7 @@ Select approach based on dashboard size:
 
 **Step 4: Normalize config and shared selectors**
 
-Extract common configuration (datasource, pluginVersion, timezone) into a `config` object.
+Extract common configuration (datasource, pluginVersion, timezone, and time range when present) into a `config` object.
 
 **Step 5: Replace panels with unified constructors**
 
@@ -51,11 +51,11 @@ For styling and table/override patterns, load `references/visual-style-guides.md
 
 **Step 6: Organize file structure**
 
-Structure the file: imports → config → constants → helpers → panels → rows → variables → dashboard. Keep all panel definitions as `local` variables in the single file.
+Structure the file: imports → config → constants → variables → selectors/helpers → panel wrappers → panels → rows → annotations → dashboard. Keep all panel definitions as `local` variables in the single file.
 
 **Step 7: Compile and verify**
 
-Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count and layout match the original dashboard in Grafana.
+Run the repo's build/compile script if available. Fix any errors. Verify panel count and layout match the original dashboard in Grafana.
 
 ## Refactor modes (quick reference)
 
@@ -68,12 +68,12 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count an
 - Preserve metric semantics and layout intent.
 - Avoid broad rewrites; focus on de-duplication and standards alignment.
 - Keep a single file; do not create dashboard-specific lib files.
-- Only update `mixin/lib/*.libsonnet` for truly reusable components.
+- Only update shared lib files for truly reusable components.
 - Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files.
 
 ## Quality checks
 
-- Build succeeds (`mixin/build.sh` or `mixin/build.ps1`).
+- Build/compile succeeds (project script if available).
 - Panel count and layout match the original dashboard.
 - Units and thresholds use `standards.*`.
 - Queries use `prom.*` helpers where applicable.
@@ -82,6 +82,8 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Fix any errors. Verify panel count an
 - Variables return values in Grafana; no duplicate or extra variables.
 - Regex filters preserved or added where needed.
 - Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
+- Annotations remain consistent and intentional (dashboard alerts, reboot detection, etc.).
+- Dashboard metadata (`schemaVersion`, `graphTooltip`, `version`) remains intact when present.
 
 ## Minimal single-file skeleton
 
@@ -95,7 +97,7 @@ local standards = import '../lib/standards.libsonnet';
 local themes = import '../lib/themes.libsonnet';
 
 // Provisioning mode (real UID). For manual import, switch to ${DS_*}.
-local DATASOURCE_UID = 'prometheus-thanos';
+local DATASOURCE_UID = '<prometheus-uid>';
 // local DATASOURCE_UID = '${DS_PROMETHEUS}';
 
 local config = {
