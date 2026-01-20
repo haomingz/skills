@@ -53,6 +53,12 @@
 - Preserve wrapper signatures when they protect many callsites.
 - Move patterns into shared libs only when they are truly generic.
 
+## Wrappers
+
+- Inventory wrapper helpers and what they encapsulate (legend/thresholds/theme/tooltip, datasource injection, `withIdAndPatches`, transforms/overrides, unsupported panel types).
+- Keep wrapper signatures stable; only add optional parameters if needed.
+- Update panel descriptions through wrapper parameters; avoid bypassing wrappers for individual panels.
+
 ## Validation
 
 - Repo build/compile script succeeds (if available).

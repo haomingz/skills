@@ -29,7 +29,7 @@ Before any edits, document:
 - Current monitoring strategy and key questions it should answer
 - Datasources, variables, time range settings
 - Row structure and panel organization
-- Existing helper/wrapper patterns, annotations, dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`), and pluginVersion
+- Annotations, dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`), and pluginVersion
 
 See `references/full-optimization-playbook.md` for detailed context gathering.
 If optimizing dashboards in a specific repo or stack, review local Jsonnet defaults and docs in the working directory for current conventions.
@@ -66,7 +66,6 @@ If user approves changes:
 - Include Jsonnet snippets for high-impact changes
 - Preserve datasource selection patterns and any `__inputs` / `__requires` blocks if present
 - Preserve `schemaVersion`, `graphTooltip`, `version`, and `pluginVersion` when present
-- Keep existing wrapper/helper patterns unless the user explicitly requests refactor
 - Add or improve panel descriptions so every panel has a clear, actionable description
 - Match existing repo/dashboard structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
 - For **table** panels, use the `panels` lib (no raw Grafonnet) and follow the detailed table guidance in `references/full-optimization-playbook.md`.

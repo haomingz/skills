@@ -55,6 +55,7 @@ Capture:
 - Layout intent and row structure
 - Variable behavior (defaults, includeAll/multi, refresh, allValue, regex filters)
 - Table panels and their transformations/overrides
+- Wrapper helpers and their defaults (legend/thresholds/theme/tooltip), datasource injection, and patching behavior
 
 ## Step 2: Decide the structure
 
@@ -88,6 +89,8 @@ local baseSelector = '{job="api",env="prod"}';
 - Wrap unified library constructors (`panels.*`, `prom.*`) and add `id/gridPos` via `panels.withIdAndPatches(...)`.
 - Keep helpers in the same file; avoid dashboard-specific libs.
 - If helper utilities exist for patching `fieldConfig` and `options`, prefer them to keep overrides consistent.
+- Preserve wrapper signatures; only add optional parameters if you must.
+- Pass descriptions through wrappers instead of bypassing wrappers for single panels.
 
 Example local helper:
 

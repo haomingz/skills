@@ -46,7 +46,7 @@ Extract common configuration (datasource, pluginVersion, timezone, and time rang
 
 **Step 5: Replace panels with unified constructors**
 
-Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds and `themes.*` for timeseries styling. Add `id` and `gridPos` via `panels.withIdAndPatches(...)` or `+ { id, gridPos }`. Remove duplicated helper functions.
+Replace local helpers with `panels.*Panel()` constructors. Apply `standards.*` for units/thresholds and `themes.*` for timeseries styling. Add `id` and `gridPos` via `panels.withIdAndPatches(...)` or `+ { id, gridPos }`.
 For styling and table/override patterns, load `references/visual-style-guides.md`.
 
 **Step 6: Organize file structure**

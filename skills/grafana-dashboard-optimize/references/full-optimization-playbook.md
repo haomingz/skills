@@ -84,6 +84,7 @@ Before making changes, document the following:
 - Existing variables and interactions
 - Dashboard metadata (`__inputs`, `__requires`, `schemaVersion`, `graphTooltip`, `version`) and annotations
 - Existing helper/wrapper patterns and plugin version
+- Wrapper defaults that affect content (legend/thresholds/theme/tooltip) and how descriptions are passed
 
 3) Semantic understanding
 - What does each row represent in the troubleshooting flow?
@@ -312,6 +313,7 @@ Row membership checks:
 Audit questions:
 - Do titles answer a specific question?
 - Are descriptions useful and actionable?
+- If wrappers are used, are descriptions passed through wrapper parameters without breaking signatures?
 
 Example:
 
