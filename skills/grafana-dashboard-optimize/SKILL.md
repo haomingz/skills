@@ -67,6 +67,7 @@ If user approves changes:
 - Preserve datasource selection patterns and any `__inputs` / `__requires` blocks if present
 - Preserve `schemaVersion`, `graphTooltip`, `version`, and `pluginVersion` when present
 - Keep existing wrapper/helper patterns unless the user explicitly requests refactor
+- Add or improve panel descriptions so every panel has a clear, actionable description
 - Match existing repo/dashboard structure (imports → config → constants → helpers → panels → rows → variables → dashboard)
 - For **table** panels, use the `panels` lib (no raw Grafonnet) and follow the detailed table guidance in `references/full-optimization-playbook.md`.
 
@@ -86,6 +87,7 @@ Re-check:
 - `__inputs` / `__requires`, annotations, and dashboard metadata remain valid and intentional
 - Regex filters preserved or added where needed for variable values
 - Row membership is correct (panels align to row `gridPos.y` and rows include panels)
+- Every panel has a description that explains intent and troubleshooting value
 
 ## Quick optimization checklist
 
@@ -98,6 +100,7 @@ Re-check:
 - [ ] Variables return values and have no duplicates/extras
 - [ ] Regex filters preserved or added when needed
 - [ ] Row membership is correct
+- [ ] Every panel has a clear, actionable description
 
 ## Assessment report format
 
