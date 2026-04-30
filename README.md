@@ -1,246 +1,67 @@
 # Agent Skills 目录
 
-Grafana Jsonnet 工作流和仪表板管理的 Claude Code 技能集合。
+Grafana Jsonnet 工作流的 Claude Code 技能集合。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue.svg)](https://claude.ai/code)
 
-## 概述
+## 安装
 
-这是一个长期维护的 Claude Code / Codex 技能目录仓库，遵循官方 Agent Skills 规范。每个 skill 都是一个自包含的包，提供专门的知识、工作流程和工具，用于处理 Grafana 仪表板、Jsonnet 和数据可视化。
+### 方式一：npx skills（推荐）
 
-## 快速开始
+使用 [skills CLI](https://github.com/vercel-labs/skills) 安装：
 
-### 安装
+```bash
+# 列出可用技能
+npx skills add haomingz/skills --list
 
-1. **添加本仓库为 Claude Code marketplace：**
-   ```bash
-   /plugin marketplace add https://github.com/haomingz/skills
-   ```
+# 安装全部技能到 Claude Code
+npx skills add haomingz/skills -a claude-code
 
-2. **安装插件：**
-   ```bash
-   /plugin install grafana-skills@haoming-skills
-   ```
+# 安装特定技能
+npx skills add haomingz/skills --skill grafana-json-to-jsonnet -a claude-code
 
-3. **开始使用：**
-   Skills 会被 Claude 自动发现并在相关场景下触发。只需自然地描述你的任务即可！
-
-### 前置要求
-
-- 已安装 Claude Code CLI
-- Python 3.8+ (用于转换脚本)
-- Git (版本控制)
-
-## 包含的技能
-
-### 1. grafana-json-to-jsonnet
-
-将 Grafana 导出的仪表板 JSON 转换为符合 grafana-code mixin 风格的 Jsonnet。
-
-**触发短语：** "convert grafana json", "grafana export to jsonnet", "import grafana dashboard"
-
-**使用示例：**
-```
-你：我有一个 Grafana 仪表板的 JSON 导出文件，能帮我转换成遵循 grafana-code 规范的 Jsonnet 吗？
-Claude: [自动触发 grafana-json-to-jsonnet skill]
+# 全局安装（跨项目生效）
+npx skills add haomingz/skills -a claude-code -g -y
 ```
 
-**功能：**
-- 将 Grafana JSON 导出转换为结构化的 Jsonnet
-- 产出单文件 Jsonnet；仅在可复用时更新 mixin/lib
-- 参数化数据源
-- 将 panel 映射到 grafana-code builders
+### 方式二：Claude Code 插件市场
 
-**了解更多：** [grafana-json-to-jsonnet](skills/grafana-json-to-jsonnet/SKILL.md)
-
----
-
-### 2. grafana-jsonnet-refactor
-
-将单体 Grafana Jsonnet 仪表板重构为清晰、可维护的统一库风格。
-
-**触发短语：** "refactor grafana jsonnet", "split dashboard", "extract lib helpers"
-
-**使用示例：**
-```
-你：这个 dashboard.jsonnet 文件太大了，能帮我重构一下吗？
-Claude: [自动触发 grafana-jsonnet-refactor skill]
+```bash
+/plugin marketplace add https://github.com/haomingz/skills
+/plugin install grafana-skills@haoming-skills
 ```
 
-**功能：**
-- 提取可复用的 panel builders
-- 消除代码重复
-- 遵循 grafana-code mixin 规范
+## 技能列表
 
-**了解更多：** [grafana-jsonnet-refactor](skills/grafana-jsonnet-refactor/SKILL.md)
+| 技能 | 用途 | 触发短语 |
+|------|------|----------|
+| [grafana-json-to-jsonnet](skills/grafana-json-to-jsonnet/SKILL.md) | Grafana UI 导出 JSON 转 Jsonnet | "convert grafana json", "import grafana dashboard" |
+| [grafana-jsonnet-refactor](skills/grafana-jsonnet-refactor/SKILL.md) | 重构 Jsonnet，消除重复、对齐规范 | "refactor grafana jsonnet", "split dashboard" |
+| [grafana-report-to-dashboard](skills/grafana-report-to-dashboard/SKILL.md) | Python 报表脚本迁移为 Grafana 仪表板 | "migrate report to grafana", "convert python report" |
+| [grafana-dashboard-optimize](skills/grafana-dashboard-optimize/SKILL.md) | 仪表板可观测性审计与优化（RED/USE） | "optimize grafana dashboard", "dashboard audit" |
 
----
-
-### 3. grafana-report-to-dashboard
-
-将 Python 报表脚本转换为支持多数据源的 Grafana Jsonnet 仪表板。
-
-**触发短语：** "migrate report to grafana", "convert python report", "elasticsearch to grafana"
-
-**使用示例：**
-```
-你：我有一个查询 Elasticsearch 并生成报表的 Python 脚本，能把它转成 Grafana 仪表板吗？
-Claude: [自动触发 grafana-report-to-dashboard skill]
-```
-
-**功能：**
-- 将 Python Elasticsearch 报表迁移到 Grafana
-- 添加 ClickHouse + Elasticsearch 双数据源支持
-- 将聚合查询映射到 Grafana panels
-- 保持报表逻辑和指标
-
-**了解更多：** [grafana-report-to-dashboard](skills/grafana-report-to-dashboard/SKILL.md)
-
----
-
-### 4. grafana-dashboard-optimize
-
-优化 Grafana Jsonnet 仪表板内容，提升可观测性与诊断效率（RED/USE/Golden Signals）。
-
-**触发短语：** "optimize grafana dashboard", "observability review", "dashboard audit"
-
-**使用示例：**
-```
-你：帮我评审这个 Grafana dashboard 的可观测性覆盖是否足够？
-Claude: [自动触发 grafana-dashboard-optimize skill]
-```
-
-**功能：**
-- 审计仪表板内容质量与诊断路径
-- 提出高优先级改进建议（含理由和预期收益）
-- 输出可落地的 Jsonnet 变更建议
-
-**了解更多：** [grafana-dashboard-optimize](skills/grafana-dashboard-optimize/SKILL.md)
-
-## 仓库结构
+## 目录结构
 
 ```
-.
-├── README.md                    # 本文件
-├── LICENSE                      # MIT 许可证
-├── .gitignore                   # Git 忽略规则
-├── .claude-plugin/              # Marketplace 配置
-│   └── marketplace.json
-├── skills/                      # 技能目录（自动发现）
-│   ├── grafana-json-to-jsonnet/
-│   │   ├── SKILL.md            # 技能定义
-│   │   ├── scripts/            # 转换脚本
-│   │   └── references/         # 参考文档（含示例）
-│   ├── grafana-jsonnet-refactor/
-│   └── grafana-report-to-dashboard/
-│   └── grafana-dashboard-optimize/
-├── templates/                   # 技能模板（不会被自动发现）
-│   └── skill-template/
-└── docs/                        # 文档
-    ├── skills-spec.md          # Skills 规范
-    ├── catalog-structure.md    # 结构指南
-    └── skill-template.md       # 模板文档
+skills/{name}/
+├── SKILL.md          # 技能定义（YAML frontmatter + 工作流）
+├── scripts/          # 可选：辅助脚本
+└── references/       # 参考文档（按需加载）
 ```
 
-## 文档
-
-- **[Skills 规范](docs/skills-spec.md)** - 官方 Agent Skills 规范摘要
-- **[目录结构](docs/catalog-structure.md)** - 仓库结构约定
-- **[Skill 模板](docs/skill-template.md)** - 创建新技能的模板
-
-## Skills 工作原理
-
-Skills 使用**渐进式披露**加载模型：
-
-1. **元数据（YAML frontmatter）** - 始终在上下文中（约100字）
-   - `name`: Skill 标识符
-   - `description`: 何时以及如何触发该 skill
-
-2. **SKILL.md 正文** - Skill 触发时加载（<5k 字）
-   - 指令、步骤和工作流程
-
-3. **打包资源** - 按需加载
-   - `scripts/`: 可执行代码
-   - `references/`: 参考文档（可包含示例输入/输出）
-   - `assets/`: 输出模板
-
-这种设计在保持 Claude 上下文高效的同时，在需要时提供深度领域知识。
+技能采用**渐进式披露**加载：frontmatter 常驻上下文，SKILL.md 触发时加载，`references/` 按需加载。
 
 ## 创建新技能
 
-1. 复制技能模板：
-   ```bash
-   cp -r templates/skill-template skills/my-new-skill
-   ```
-
-2. 编辑 `SKILL.md`：
-   - 更新 frontmatter（name、第三人称描述且包含触发语境的 description）
-   - 编写清晰的指令
-   - 添加示例和参考资料（建议放在 `references/`）
-
-3. 本地测试：
-   ```bash
-   /plugin reload
-   ```
-
-4. 提交 pull request！
-
-详细指南参见 [docs/skill-template.md](docs/skill-template.md)。
-
-## 贡献
-
-欢迎贡献！请遵循以下指南：
-
-1. **Fork 仓库**并创建功能分支
-2. **遵循官方 Agent Skills 规范**（参见 docs/skills-spec.md）
-3. **在 skill 描述中使用清晰的触发短语**
-4. **在 `references/` 中包含示例（如有）**
-5. **提交前充分测试**
-6. **提交带有清晰描述的 pull request**
-
-### 开发环境设置
-
 ```bash
-# 克隆仓库
-git clone https://github.com/haomingz/skills.git
-cd skills
-
-# 如需运行脚本，请按对应 skill 的说明安装依赖
+cp -r templates/skill-template skills/my-new-skill
+# 编辑 SKILL.md，更新 name、description 和工作流
+/plugin reload
 ```
 
-## 故障排除
-
-### Skills 没有触发？
-
-- 检查 description 是否包含清晰的触发短语
-- 重新加载插件：`/plugin reload`
-- 查看 Claude Code 日志中的错误
-
-### 脚本执行失败？
-
-- 验证 Python 版本（3.8+）
-- 检查 `SKILL.md` 中的依赖说明
-- 查看脚本输出中的具体错误
-
-### 需要帮助？
-
-- 查看 `skills/*/SKILL.md` 中的技能文档
-- 查看官方 Claude Code 文档
-- 在 GitHub 上提出 issue
+详见 [docs/skill-template.md](docs/skill-template.md) 和 [docs/skills-spec.md](docs/skills-spec.md)。
 
 ## 许可证
 
-本项目基于 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
-
-## 致谢
-
-- 为 [Claude Code](https://claude.ai/code) 构建
-- 遵循官方 [Agent Skills 规范](https://docs.claude.com)
-- 受 Grafana 社区启发
-
----
-
-**维护者：** Haoming Zhang
-**版本：** 0.1.0
-**最后更新：** 2026-01-02
+MIT — 详见 [LICENSE](LICENSE)

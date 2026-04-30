@@ -152,19 +152,7 @@ python scripts/convert_grafana_json.py \
 
 ## Completeness verification
 
-**CRITICAL:** Run verification after conversion to ensure nothing is missing.
-
-Required checks:
-- Panel count matches source JSON
-- All variables converted and present
-- Row structure preserved
-- Dashboard renders correctly in Grafana
-- Variables return values in Grafana (non-empty dropdowns)
-- No duplicate or extra variables
-- Regex filters preserved or added where needed
-- Row membership verified (panel `gridPos.y` aligns to row `gridPos.y`, and rows include panels)
-
-**For verification scripts and detailed instructions**: See `references/verification-guide.md`
+**CRITICAL:** After conversion, run the functional completeness checks in the quality checklist below. For verification scripts and detailed instructions, see `references/verification-guide.md`.
 
 **If verification fails**, return to the appropriate workflow step, fix issues, recompile, and verify again.
 

@@ -74,62 +74,20 @@ For query optimization patterns, see `references/query-optimization.md`.
 
 **Step 5: Validate improvements**
 
-Re-check:
-- Queries are efficient and bounded
-- Units and thresholds use `standards.*`
-- Panel titles are consistent in style and descriptions are present
-- Layout follows diagnostic flow
-- RED/USE/Golden Signals coverage is complete
-- Table panels remove unused fields and apply table optimization guidance (overrides/thresholds, colors, widths, cell types)
-- Variables return values in Grafana (non-empty dropdowns)
-- No duplicate or extra variables after cleanup
-- `__inputs` / `__requires`, annotations, and dashboard metadata remain valid and intentional
-- Regex filters preserved or added where needed for variable values
-- Row membership is correct (panels align to row `gridPos.y` and rows include panels)
-- Every panel has a description that explains intent and troubleshooting value
+Run the quality checklist below against the improved dashboard. If any check fails, return to Step 4, fix, and verify again.
 
-## Quick optimization checklist
+## Quality checklist
 
 - [ ] RED/USE/Golden Signals coverage is complete
 - [ ] Queries are efficient and bounded
 - [ ] Units and thresholds use `standards.*`
-- [ ] Panel titles are consistent and descriptions exist for every panel
+- [ ] Panel titles are consistent and every panel has a clear, actionable description
 - [ ] Layout follows overview → symptoms → root cause
-- [ ] Table panels remove unused fields and apply table optimization guidance (overrides/thresholds, colors, widths, cell types)
+- [ ] Table panels remove unused fields (overrides/thresholds, colors, widths, cell types applied)
 - [ ] Variables return values and have no duplicates/extras
-- [ ] Regex filters preserved or added when needed
-- [ ] Row membership is correct
-- [ ] Every panel has a clear, actionable description
-
-## Assessment report format
-
-Use this structure for recommendations:
-
-```markdown
-# Dashboard Optimization Assessment
-
-## Overview
-- Purpose: [what this dashboard monitors]
-- Audience: [SRE/on-call/management]
-- Current state: [summary]
-
-## Critical Issues
-1. [Issue with rationale and impact]
-2. [Issue with rationale and impact]
-
-## Recommended Improvements
-1. [Improvement with expected benefit]
-2. [Improvement with expected benefit]
-
-## Optional Enhancements
-1. [Enhancement idea]
-2. [Enhancement idea]
-
-## Implementation Priority
-- Week 1: Critical issues
-- Week 2: Recommended improvements
-- Week 3+: Optional enhancements
-```
+- [ ] Regex filters preserved or added where needed
+- [ ] Row membership is correct (panels align to row `gridPos.y`)
+- [ ] `__inputs` / `__requires`, annotations, and dashboard metadata remain valid and intentional
 
 ## Guardrails
 

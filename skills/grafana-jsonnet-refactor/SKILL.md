@@ -57,12 +57,6 @@ Structure the file: imports → config → constants → variables → selectors
 
 Run the repo's build/compile script if available. Fix any errors. Verify panel count and layout match the original dashboard in Grafana.
 
-## Refactor modes (quick reference)
-
-- **Direct migration**: Remove helpers and use unified libs directly (small dashboards)
-- **Wrapper pattern**: Keep helper signatures, but call unified libs internally (large dashboards)
-- **Hybrid**: Mix direct + wrappers only where needed
-
 ## Guardrails
 
 - Preserve metric semantics and layout intent.
@@ -71,19 +65,19 @@ Run the repo's build/compile script if available. Fix any errors. Verify panel c
 - Only update shared lib files for truly reusable components.
 - Do not run `jsonnetfmt` / `jsonnet fmt` on generated Jsonnet files.
 
-## Quality checks
+## Quality checklist
 
-- Build/compile succeeds (project script if available).
-- Panel count and layout match the original dashboard.
-- Units and thresholds use `standards.*`.
-- Queries use `prom.*` helpers where applicable.
-- No dashboard-specific lib files exist in final output.
-- Preserve `__inputs` / `__requires` and manual import lines when present.
-- Variables return values in Grafana; no duplicate or extra variables.
-- Regex filters preserved or added where needed.
-- Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
-- Annotations remain consistent and intentional (dashboard alerts, reboot detection, etc.).
-- Dashboard metadata (`schemaVersion`, `graphTooltip`, `version`) remains intact when present.
+- [ ] Build/compile succeeds (project script if available).
+- [ ] Panel count and layout match the original dashboard.
+- [ ] Units and thresholds use `standards.*`.
+- [ ] Queries use `prom.*` helpers where applicable.
+- [ ] No dashboard-specific lib files exist in final output.
+- [ ] `__inputs` / `__requires` and manual import lines preserved when present.
+- [ ] Variables return values in Grafana; no duplicate or extra variables.
+- [ ] Regex filters preserved or added where needed.
+- [ ] Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
+- [ ] Annotations remain consistent and intentional.
+- [ ] Dashboard metadata (`schemaVersion`, `graphTooltip`, `version`) preserved when present.
 
 ## Minimal single-file skeleton
 

@@ -60,7 +60,7 @@ local config = {
 };
 ```
 
-For manual import mode, use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` variables.
+For manual import mode, use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` UIDs, and add `__inputs` and `__requires` blocks so Grafana can prompt for datasources on import.
 
 **Step 5: Implement panels**
 
@@ -69,13 +69,6 @@ Implement each panel using unified libraries. Select datasource explicitly per p
 **Step 6: Compile and verify**
 
 Run `mixin/build.sh` or `mixin/build.ps1`. Verify panel results match the report for a known time window. Test both ES7/ES8 and ClickHouse queries in Grafana.
-
-## Panel type quick reference
-
-- Summary numbers → `panels.statPanel`
-- Time trends → `panels.timeseriesPanel`
-- Top-N rankings → `panels.tablePanel`
-- Comparisons → `panels.barGaugePanel` or timeseries with bars theme
 
 ## Quality checks
 
@@ -87,11 +80,6 @@ Run `mixin/build.sh` or `mixin/build.ps1`. Verify panel results match the report
 - Variables return values in Grafana; no duplicate or extra variables.
 - Regex filters preserved or added where needed.
 - Row membership is correct (`gridPos.y` aligns to row `gridPos.y`, and rows include panels).
-
-## Manual import support
-
-- Use `${DS_ELASTICSEARCH}` and `${DS_CLICKHOUSE}` in manual import mode.
-- Add `__inputs` and `__requires` so Grafana can prompt for datasources.
 
 ## Dual datasource example
 
