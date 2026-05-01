@@ -1,4 +1,4 @@
-## 目录
+## Contents
 - 批量下载多只股票（含限速与异常处理）
 - 全市场实时行情筛选
 - 行业板块筛选并批量下载K线
@@ -173,7 +173,7 @@ print(f"沪深300成分股共 {len(hs300_df):,} 条")
 import akshare as ak
 import pandas as pd
 
-# ⚠️ 分钟线日期格式为 YYYY-MM-DD HH:MM:SS，不是 YYYYMMDD
+# 分钟线日期格式为 YYYY-MM-DD HH:MM:SS，不是 YYYYMMDD
 df_5min = ak.stock_zh_a_hist_min_em(
     symbol="000001",
     period="5",
@@ -330,7 +330,7 @@ df_yjbb = ak.stock_yjbb_em(date="20240930")
 print(f"业绩报表共 {len(df_yjbb)} 条")
 
 # ── 主要财务指标（东财版，推荐）────────────
-# ⚠️ symbol 需加市场后缀：沪市 .SH，深市/创业板/科创板 .SZ
+# symbol 需加市场后缀：沪市/科创板 .SH，深市/创业板 .SZ
 df_fi = ak.stock_financial_analysis_indicator_em(
     symbol="000001.SZ",
     indicator="按报告期"

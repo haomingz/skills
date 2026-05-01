@@ -1,7 +1,7 @@
-> 官方文档：`https://akshare.akfamily.xyz/` | 最低版本：akshare 1.18+
+> 官方文档：`https://akshare.akfamily.xyz/`
 > 下列签名如与实际不符，以官方文档为准（接口频繁更新）。
 
-## 目录
+## Contents
 - A股历史K线（stock_zh_a_hist）
 - A股实时行情（全市场 & 分市场）
 - A股分钟线（stock_zh_a_hist_min_em）
@@ -71,7 +71,7 @@ ak.stock_new_a_spot_em()  # 新股
 ak.stock_zh_a_hist_min_em(
     symbol: str = "000001",
     period: str = "5",                          # "1"/"5"/"15"/"30"/"60"
-    start_date: str = "1979-09-01 09:32:00",    # ⚠️ YYYY-MM-DD HH:MM:SS（非 YYYYMMDD）
+    start_date: str = "1979-09-01 09:32:00",    # 日期格式：YYYY-MM-DD HH:MM:SS（非 YYYYMMDD）
     end_date: str = "2222-01-01 09:32:00",
     adjust: str = "",                           # period="1" 时 adjust 无效
 ) -> pd.DataFrame
@@ -278,7 +278,7 @@ ak.stock_cash_flow_sheet_by_report_em(symbol: str = "000001") -> pd.DataFrame # 
 ### 财务指标
 ```python
 ak.stock_financial_analysis_indicator(symbol: str = "000001") -> pd.DataFrame
-# 主要财务指标 ⚠️ 可能超时
+# 主要财务指标；可能超时
 
 ak.stock_financial_analysis_indicator_em(
     symbol: str = "000001.SZ",    # 需加市场后缀 .SZ/.SH
@@ -343,7 +343,7 @@ ak.stock_zh_valuation_baidu(
 ) -> pd.DataFrame
 
 ak.stock_zh_valuation_comparison_em(symbol: str = "000001") -> pd.DataFrame  # 同行业估值对比
-ak.stock_dxsyl_em() -> pd.DataFrame   # 全市场股息率 ⚠️ 较慢
+ak.stock_dxsyl_em() -> pd.DataFrame   # 全市场股息率；较慢
 ```
 
 ---
@@ -351,7 +351,7 @@ ak.stock_dxsyl_em() -> pd.DataFrame   # 全市场股息率 ⚠️ 较慢
 ## 港股
 
 ```python
-ak.stock_hk_spot_em() -> pd.DataFrame    # 港股实时（⚠️ 较慢）
+ak.stock_hk_spot_em() -> pd.DataFrame    # 港股实时；较慢
 
 ak.stock_hk_hist(
     symbol: str = "00700",     # 5位数字，腾讯：00700
@@ -376,7 +376,7 @@ ak.stock_zh_ah_spot_em() -> pd.DataFrame   # AH股价格对比
 ## 美股
 
 ```python
-ak.stock_us_spot_em() -> pd.DataFrame   # 美股实时（⚠️ 较慢）
+ak.stock_us_spot_em() -> pd.DataFrame   # 美股实时；较慢
 
 ak.stock_us_hist(
     symbol: str = "AAPL",      # 大写 Ticker
