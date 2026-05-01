@@ -19,6 +19,15 @@
         "./skills/grafana-report-to-dashboard",
         "./skills/grafana-dashboard-optimize"
       ]
+    },
+    {
+      "name": "finance-skills",
+      "description": "Skills for financial data retrieval and analysis.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/baostock-data"
+      ]
     }
   ]
 }
