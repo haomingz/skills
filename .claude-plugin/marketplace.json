@@ -26,7 +26,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/baostock-data"
+        "./skills/baostock-data",
+        "./skills/akshare-data"
       ]
     }
   ]

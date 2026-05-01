@@ -1,6 +1,12 @@
 ---
 name: baostock-data
 description: 使用 BaoStock Python 库获取中国 A 股证券数据（免费，无需注册）。当需要编写 Python 代码获取 A 股 K 线数据、季度财务报表、股票基本信息、指数成分股或宏观经济指标时使用。涵盖 query_history_k_data_plus、季度财务数据、交易日历、选股筛选、技术指标计算、批量下载等场景。
+requirements:
+  - baostock
+  - pandas
+allowed-tools:
+  - Bash(python:*)
+  - Read
 ---
 
 # BaoStock A 股数据获取
@@ -18,6 +24,8 @@ pip install baostock --upgrade
 # 验证：应输出 "login success!"
 python -c "import baostock as bs; lg = bs.login(); print(lg.error_msg); bs.logout()"
 ```
+
+函数签名有疑问时查官方文档：`http://baostock.com/baostock/index.php/Python_API文档`
 
 ---
 
@@ -212,6 +220,8 @@ date, code, open, high, low, close, volume, amount, adjustflag, turn, pctChg
 
 11. **`login()`/`logout()` 会向 stdout 打印提示** — 如需静默运行，用 `contextlib.redirect_stdout(open(os.devnull, 'w'))`
 
+12. **货币供应量接口日期格式不同** — `query_money_supply_data_month` 的 `start_date`/`end_date` 用 `"YYYY-MM"`（如 `"2024-01"`），`query_money_supply_data_year` 用 `"YYYY"`（如 `"2024"`）；传入 `"YYYY-MM-DD"` 会静默返回空
+
 ---
 
 ## AI Agent 操作策略
@@ -249,3 +259,5 @@ date, code, open, high, low, close, volume, amount, adjustflag, turn, pctChg
 - `references/api-reference.md` — 全部 API 的参数说明与返回字段（含算法公式）
 - `references/common-recipes.md` — 常用任务代码模板（批量下载、技术指标、回测框架、静默登录）
 - `references/production-patterns.md` — 生产级模式（Parquet存储、QPS限速、增量更新、全市场下载）
+- 官方文档：`http://baostock.com/baostock/index.php/Python_API文档`
+- PyPI：`https://pypi.org/project/baostock/`
