@@ -1,6 +1,6 @@
 # Agent Skills 目录
 
-Grafana Jsonnet 与金融数据工作流的 Claude Code 技能集合。
+Grafana 可观测性、金融数据获取与券商交易 API 的 Claude Code 技能集合。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude-Code-blue.svg)](https://claude.ai/code)
@@ -42,6 +42,8 @@ npx skills add haomingz/skills -a claude-code -g -y
 | [grafana-dashboard-optimize](skills/grafana-dashboard-optimize/SKILL.md) | 仪表板可观测性审计与优化（RED/USE） | "optimize grafana dashboard", "dashboard audit" |
 | [baostock-data](skills/baostock-data/SKILL.md) | 使用 BaoStock 获取中国 A 股行情、财务、指数成分与宏观数据 | "baostock", "A股K线", "季度财务指标" |
 | [akshare-data](skills/akshare-data/SKILL.md) | 使用 AKShare 获取 A股/港股/美股/期货/基金/宏观等多市场数据 | "akshare", "A股实时行情", "资金流向", "宏观数据" |
+| [schwab-trader](skills/schwab-trader/SKILL.md) | Charles Schwab API 美股交易：OAuth、行情、下单、账户查询 | "Schwab API", "schwab-py", "美股 API 下单" |
+| [ibkr-trader](skills/ibkr-trader/SKILL.md) | IBKR TWS API 全球多市场交易（ib_async）：期货、期权、外汇、实时行情 | "IBKR API", "ib_async", "IB Gateway", "期货下单" |
 
 ## 目录结构
 

@@ -155,6 +155,19 @@ references/*  →  Claude 按需读取（无预加载成本）
 - 始终用正斜杠：`references/guide.md`，不用 `references\guide.md`
 - 目录按领域组织：`references/finance.md`、`references/sales.md`
 
+### 本地文件引用范围限制
+
+**Skill 只能引用当前 skill 目录内的本地文件。** Skill 安装时仅复制 `skills/{name}/` 目录，目录外的本地文件不会随之下发，引用后在用户环境中会 404。
+
+```
+✅ 允许：references/api-reference.md       （当前 skill 目录内）
+✅ 允许：https://docs.example.com/api      （远端 URL，始终可访问）
+❌ 禁止：docs/ibkr-api/third-party-tools.md（当前 skill 目录外的本地路径）
+❌ 禁止：../shared/common-recipes.md        （跨 skill 目录引用）
+```
+
+需要引用外部资料时，改用远端 URL；需要跨 skill 共享内容时，在各 skill 的 `references/` 中各自维护一份副本。
+
 ## 八、内容质量
 
 - **不写时效性信息**：不要写 "August 2025 之前用旧 API"；如必须保留历史，用 `<details>` 折叠
@@ -171,6 +184,7 @@ references/*  →  Claude 按需读取（无预加载成本）
 - [ ] `description` 第三人称，含具体触发短语，非空
 - [ ] SKILL.md 正文 ≤ 500 行
 - [ ] 所有 `references/` 中引用的文件真实存在
+- [ ] 无引用当前 skill 目录外的本地文件路径（只允许 `references/` 内文件或远端 URL）
 
 **内容质量**
 - [ ] 正文使用祈使/动词开头形式，无第二人称
