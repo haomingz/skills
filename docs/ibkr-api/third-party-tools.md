@@ -575,24 +575,123 @@ volumes:
 
 ---
 
-### 两镜像对比
+---
 
-| 维度 | gnzsnz/ib-gateway | extrange/ibkr-docker |
-|------|------------------|---------------------|
-| Stars | ~1500 | ~336 |
-| 默认进程 | IB Gateway（轻量）| TWS（全功能）|
-| API 端口 | Paper 4003 / Live 4004 | 统一 8888 |
-| 切换模式 | 修改 TRADING_MODE，重启 | `GATEWAY_OR_TWS=gateway` |
-| IBC 配置覆盖 | 独立具名 env 变量 | `IBC_` 前缀直接覆盖任意字段 |
-| ulimit 要求 | 无 | nofile=10000（必须设置）|
-| 社区活跃度 | 更高（ib_async 生态关联）| 中等 |
-| TWS GUI 访问 | `tws-rdesktop` 变体（RDP）| 默认就是 TWS（noVNC）|
-| 维护者背景 | ib_async 贡献者 | 独立开发者 |
+### UnusualAlpha/ib-gateway-docker
+
+**GitHub**: https://github.com/UnusualAlpha/ib-gateway-docker  
+**镜像**: `ghcr.io/unusualalpha/ib-gateway`  
+**Stars**: ~293
+
+#### 特点
+
+- 组件与 gnzsnz 相同（IB Gateway + IBC + Xvfb + x11vnc + socat），但**无 noVNC**，VNC 需用独立 VNC 客户端连接
+- 端口直接暴露 4001/4002（不通过 socat 二次映射），端口语义与原生 Gateway 一致
+- VNC 默认关闭，仅当设置 `VNC_SERVER_PASSWORD` 时才启动
+- 在自己的 GitHub Pages 上存档了历史版本的 IB Gateway 安装包，支持 pin 到指定版本重建镜像
+- 安全提示明确：IB API 是未加密的裸 TCP，默认只绑定 127.0.0.1，跨机器访问需加 SSH tunnel 或 TLS
+
+#### Docker Compose
+
+```yaml
+services:
+  ib-gateway:
+    image: ghcr.io/unusualalpha/ib-gateway:stable
+    restart: always
+    environment:
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: ${TRADING_MODE:-paper}
+      READ_ONLY_API: "no"
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}
+    ports:
+      - "127.0.0.1:4001:4001"   # Live
+      - "127.0.0.1:4002:4002"   # Paper
+      - "127.0.0.1:5900:5900"   # VNC（仅设置密码后生效）
+```
+
+```python
+from ib_async import IB
+ib = IB()
+ib.connect('127.0.0.1', 4002, clientId=1)  # Paper
+```
+
+---
+
+### heshiming/ibga
+
+**GitHub**: https://github.com/heshiming/ibga  
+**镜像**: `heshiming/ibga`  
+**Stars**: ~43  
+**文档**: https://heshiming.github.io/ibga/
+
+#### 特点
+
+`ibga`（IB Gateway Automation）是与其他镜像**架构完全不同**的方案：不使用 IBC，而是自研 JAuto（JVMTI agent）+ xdotool 进行 GUI 自动化，直接识别 IB Gateway 界面元素并模拟键鼠输入。
+
+最大亮点：**内置 TOTP 自动化**（oathtool 生成验证码），实现完全无人值守的 2FA 登录，不依赖 IBKR Mobile App 手动确认。
+
+| 特性 | ibga | IBC 系镜像 |
+|------|------|-----------|
+| 底层实现 | JAuto + xdotool（自研）| IBC（Java）|
+| TOTP 自动输入 | ✅ 内置（oathtool）| ⚠️ 需手机确认 |
+| 每日自动重启 | ✅ | ✅ |
+| Paper 确认对话框 | ✅ 自动处理 | ✅ |
+| API 端口 | 4000（固定）| 4001/4002 |
+| 社区规模 | 小（43 stars）| 大 |
+
+#### Docker Compose
+
+```yaml
+services:
+  ibga:
+    image: heshiming/ibga
+    restart: unless-stopped
+    environment:
+      - IB_USERNAME=your_username
+      - IB_PASSWORD=your_password
+      - IB_REGION=America            # America / Asia / Europe
+      - IB_TIMEZONE=America/New_York
+      - IB_LOGINTAB=IB API           # IB API / TWS
+      - IB_LOGINTYPE=Live Trading    # Live Trading / Paper Trading
+      - IB_LOGOFF=11:55 PM           # 每日登出时间
+      - IB_LOGLEVEL=Error
+    volumes:
+      - ./run/program:/home/ibg
+      - ./run/settings:/home/ibg_settings
+    ports:
+      - "4000:4000"     # TWS API
+      - "15800:5800"    # noVNC
+```
+
+```python
+from ib_async import IB
+ib = IB()
+ib.connect('127.0.0.1', 4000, clientId=1)
+```
+
+**适用场景**：需要全自动 TOTP 2FA 登录、不希望每次重启都手动确认手机通知的场景。代价是依赖自研 C 库，社区较小，出问题时排查资料少。
+
+---
+
+### 四镜像对比
+
+| 维度 | gnzsnz | extrange | UnusualAlpha | ibga |
+|------|--------|----------|--------------|------|
+| Stars | ~1500 | ~336 | ~293 | ~43 |
+| 自动化实现 | IBC | IBC | IBC | JAuto + xdotool |
+| 默认进程 | IB Gateway | TWS | IB Gateway | IB Gateway |
+| API 端口 | 4003/4004 | 8888（统一）| 4001/4002（原生）| 4000 |
+| noVNC | ✅ | ✅ | ❌（仅 VNC）| ✅ |
+| TOTP 全自动 | ❌（需手机确认）| ❌（需手机确认）| ❌（需手机确认）| ✅ oathtool |
+| ulimit 要求 | 无 | nofile=10000 | 无 | 无 |
+| 维护活跃度 | 高 | 高 | 中 | 中 |
 
 **选择建议：**
-- 生产量化系统（轻量、稳定）→ **gnzsnz**
-- 需要完整 TWS GUI、或偏好单一端口简化配置 → **extrange**
-- 同时运行 paper/live 两套 → gnzsnz 更易配置多容器
+- 生产量化，追求稳定和社区支持 → **gnzsnz**
+- 需要完整 TWS GUI 或偏好单端口 → **extrange**
+- 偏好原生 4001/4002 端口语义、无需 noVNC → **UnusualAlpha**
+- 需要 TOTP 全自动（无人值守 2FA）→ **ibga**（接受较小社区的代价）
 
 ---
 

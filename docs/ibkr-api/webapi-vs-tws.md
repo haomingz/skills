@@ -80,11 +80,101 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 | 协议 | TCP Socket 长连接 | HTTPS 请求/WebSocket |
 | Session 超时 | ❌ 无（只要 TWS/Gateway 在线）| ⚠️ **60 分钟无操作超时，需 tickle 保活** |
 | 并发 brokerage session | 多个 clientId 可同时连接 | **每个用户名只能有 1 个 brokerage session** |
-| Session 冲突 | 无 | 登录 TWS / Client Portal / Mobile 会**踢掉** API session |
+| Session 冲突 | 有，但 Gateway 可配置自动夺回主控权 | 登录 TWS / Client Portal / Mobile 会**踢掉** API session，无自动恢复 |
 | 重连难度 | 事件驱动（`disconnectedEvent`）| 需要重新走 session 初始化流程 |
 | TWS 每日重启影响 | 每日约 23:45 UTC 断线需重连 | 每日约 01:00 local 短暂维护 |
 
 **最关键差异**：Web API 的单 session 限制是生产系统的核心痛点。如果用户同时打开了 Client Portal 网页、手机 App 或 TWS 桌面，API session 会被踢掉，不会有任何警告，下单请求直接失败。TWS API 没有这个限制。
+
+---
+
+## 多 Session 问题深度解析
+
+### 两套 API 的根本差异
+
+**TWS API** 的连接是纯 TCP socket，由 IB Gateway / TWS 进程管理：
+
+- 多个策略脚本可以用不同 `clientId` 同时连接同一个 Gateway，互不干扰
+- 移动端 IBKR App 同样会与 IB Gateway 竞争 brokerage session —— 但关键区别在于：IB Gateway 可通过 IBC 的 `ExistingSessionDetectedAction=primaryoverride` 配置，在被踢掉后**自动夺回主控权**，无需人工干预
+- 多个 Gateway/TWS 同时启动时，`ExistingSessionDetectedAction` 同样决定谁胜出
+
+**Web API** 的连接建立在 IBKR 的 "brokerage session" 之上：
+
+- 每个 IBKR 用户名同一时刻只允许一个活跃的 brokerage session
+- 移动 App、Client Portal 网页、CP Gateway 三者共用同一个 brokerage session 池
+- 任何一方发起新的 brokerage session，其他方的 session 即刻失效
+- 失效是静默的：CP Gateway 继续运行，但后续 API 请求返回 403 或空结果，不会主动通知
+
+### 实际冲突场景
+
+```
+场景一：移动端看行情踢掉 API（最常见）
+  手机打开 IBKR App（自动建立 brokerage session）
+    → CP Gateway 的 brokerage session 失效
+      → /iserver/accounts 返回空，下单返回 503
+        → 策略无声停止，直到手动重新认证
+
+场景二：忘记登出 Client Portal 网页
+  浏览器访问 Client Portal 页面
+    → 建立新 brokerage session
+      → Gateway session 被踢
+
+场景三：Gateway 重启后与移动 App 竞争
+  Gateway 每日自动重启，重新建立 brokerage session
+    → 若此时手机也在线，双方互相踢，陷入认证死循环
+```
+
+### TWS API 的同场景表现
+
+同一账号同时使用移动 App + IB Gateway（TWS API 路径）时：
+
+- 移动 App 打开 IBKR 会触发 brokerage session 竞争，Gateway 可能短暂被踢
+- IBC 配置 `ExistingSessionDetectedAction=primaryoverride` 后，Gateway 会自动检测到 session 丢失并重新夺回主控权，**整个过程无需人工干预**
+- 夺回过程中可能出现 Error 10197（"No market data during competing live session"）：这是行情权限短暂受限的提示，**不是连接断开**，Gateway 恢复主控权后行情自动恢复
+
+### 结论：应用层兜不住，只有两条路
+
+**Web API 的 brokerage session 由 IBKR 服务端控制，应用层无法从根本上规避竞争。** `/logout` + `/reauthenticate` 的恢复脚本、定时重启 ibeam 容器等手段，在移动 App 仍然在线时几乎都会再次失效，社区已广泛验证此类方案只是缓解、不能根治。
+
+真正有效的只有两条路：
+
+#### 路径一：改用 TWS API + IB Gateway（推荐）
+
+IB Gateway 与 CP Gateway 的关键区别在于：IBC 的 `ExistingSessionDetectedAction=primaryoverride` 可让 Gateway 在被移动 App 踢掉 brokerage session 后**自动夺回主控权**：
+
+- 手机用 IBKR App 触发 session 竞争 → Gateway 自动重新夺回 → 策略脚本无需任何处理
+- 多个策略脚本用不同 `clientId` 可同时连接同一个 Gateway
+- 夺回过程中偶发 Error 10197（行情权限短暂受限，非断连）：Gateway 恢复后自动消失
+
+IB Gateway 每天约 23:45 UTC 自动重启断线约 1–5 分钟，需要自动重连逻辑覆盖（见 `references/common-recipes.md` 自动重连章节）。
+
+#### 路径二：Web API + 专用 API 子账号
+
+IBKR 个人账号可以在 **Account Management → Settings → Users & Access Rights → Add User** 添加额外登录用户。每个用户名有完全独立的 brokerage session：
+
+```
+主用户 myaccount      → 手机 IBKR App / Client Portal 日常使用
+子用户 myaccount_api  → CP Gateway / ibeam 专用，永远不在移动端登录
+```
+
+这样两个用户名各自维护独立的 session，互不干扰。代价是需要维护两套登录凭据，且子账号登录 CP Gateway 后依然受 60 分钟 tickle 超时约束。
+
+### 推荐决策
+
+```
+同时使用移动 App + API 策略？
+
+  首选 → TWS API（IB Gateway + ib_async）
+         有 session 竞争，但 ExistingSessionDetectedAction=primaryoverride
+         让 Gateway 自动夺回主控权，策略脚本无感知
+         唯一需要处理的中断是每日重启（约 1–5 分钟），自动重连可覆盖
+
+  次选 → Web API + 创建专用 API 子账号（Users & Access Rights）
+         两套用户名各走各的 session，彻底隔离
+
+  不可行 → 同一账号同时跑 Web API + 移动 App
+           CP Gateway 无自动夺回机制，brokerage session 被踢后无法自恢复
+```
 
 ---
 
@@ -147,7 +237,7 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 | 需要 VWAP/TWAP/Adaptive 等算法订单 | **必须 TWS API**，Web API 没有 |
 | 同时监控 50+ 标的实时行情 | **推荐 TWS API**，Web API 10 req/s 容易触顶 |
 | 策略频繁下单（>10 次/秒）| **推荐 TWS API**，Web API Gateway 硬限 10/s |
-| 用户账号同时使用 TWS + API | **必须 TWS API**，Web API 会被踢 session |
+| 同时使用移动 App + API 策略 | **推荐 TWS API**，Gateway 可自动夺回 session；Web API 被踢后无法自恢复 |
 | Cloud 服务器，不想运行 Java 桌面进程 | Web API + ibeam Docker |
 | 需要开户 / 资金划转 / 报表 API | **必须 Web API** |
 | 轻量查询持仓/余额/当日订单 | Web API 够用 |
@@ -166,4 +256,6 @@ Web API 的单 session 限制在实际生产中频繁造成问题：
         → 策略无声地停止工作
 ```
 
-TWS API 完全没有这个问题：多个 clientId 可以同时连接，互不干扰。
+TWS API 同样有 session 竞争，但 IB Gateway 可通过 `ExistingSessionDetectedAction=primaryoverride` 自动夺回主控权，策略脚本不需要处理这个中断。多个 clientId 同时连接同一个 Gateway 互不干扰。
+
+关于多 session 冲突的完整分析（包括 TWS API vs Web API 的底层机制差异、创建专用 API 子账号的方法、以及各类社区解法），参见上方 [多 Session 问题深度解析](#多-session-问题深度解析)。

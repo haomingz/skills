@@ -2,6 +2,7 @@
 
 ## Contents
 - 连接与断开
+- 自动重连（Gateway 每日重启 / 网络中断）
 - 历史数据（单标的/批量/连续回溯）
 - 实时行情订阅
 - 期权链查询
@@ -11,6 +12,143 @@
 - 持仓与账户查询
 - P&L 实时订阅
 - 异步模式
+
+---
+
+## 自动重连（Gateway 每日重启 / 网络中断）
+
+IB Gateway 每天约 **23:45 UTC**（服务器时间）自动重启，TCP 连接断开约 1–5 分钟。策略脚本必须能自动重连并恢复行情订阅，否则错过重连窗口后会静默失效。
+
+### 基于事件的重连（推荐）
+
+```python
+import asyncio
+import logging
+from ib_async import IB, Stock
+
+log = logging.getLogger(__name__)
+
+class AutoReconnectIB:
+    def __init__(self, host='127.0.0.1', port=4001, client_id=1):
+        self.host = host
+        self.port = port
+        self.client_id = client_id
+        self.ib = IB()
+        self._subscribed_contracts = []  # 记录已订阅合约，重连后恢复
+        self.ib.disconnectedEvent += self._on_disconnect
+
+    def connect(self):
+        self.ib.connect(self.host, self.port, clientId=self.client_id)
+        self.ib.sleep(1)
+        log.info(f"Connected, account: {self.ib.managedAccounts()}")
+
+    def _on_disconnect(self):
+        log.warning("Disconnected from IB Gateway, will reconnect...")
+        self.ib.sleep(5)  # 等 Gateway 重启完成
+        self._reconnect_loop()
+
+    def _reconnect_loop(self):
+        delay = 5
+        while not self.ib.isConnected():
+            try:
+                self.ib.connect(self.host, self.port, clientId=self.client_id)
+                self.ib.sleep(1)
+                log.info("Reconnected successfully")
+                self._restore_subscriptions()
+            except Exception as e:
+                log.warning(f"Reconnect failed ({e}), retry in {delay}s")
+                self.ib.sleep(delay)
+                delay = min(delay * 2, 60)  # 指数退避，最长 60 秒
+
+    def subscribe(self, contract):
+        """订阅行情，同时记录到恢复列表"""
+        self._subscribed_contracts.append(contract)
+        return self.ib.reqMktData(contract)
+
+    def _restore_subscriptions(self):
+        """重连后恢复所有行情订阅"""
+        for contract in self._subscribed_contracts:
+            self.ib.reqMktData(contract)
+        if self._subscribed_contracts:
+            log.info(f"Restored {len(self._subscribed_contracts)} subscriptions")
+```
+
+使用方式：
+
+```python
+mgr = AutoReconnectIB(port=4001, client_id=1)
+mgr.connect()
+
+stock = Stock('AAPL', 'SMART', 'USD')
+mgr.ib.qualifyContracts(stock)
+ticker = mgr.subscribe(stock)  # 用 subscribe 代替 reqMktData，自动加入恢复列表
+
+mgr.ib.run()  # 阻塞运行，断线时自动重连
+```
+
+### asyncio 版本
+
+```python
+import asyncio
+from ib_async import IB, Stock
+
+async def run_with_reconnect(host='127.0.0.1', port=4001, client_id=1):
+    subscribed = []
+
+    async def connect(ib: IB):
+        await ib.connectAsync(host, port, clientId=client_id)
+        await asyncio.sleep(1)
+        # 重连后恢复订阅
+        for contract in subscribed:
+            ib.reqMktData(contract)
+
+    ib = IB()
+
+    while True:
+        try:
+            await connect(ib)
+
+            stock = Stock('AAPL', 'SMART', 'USD')
+            await ib.qualifyContractsAsync(stock)
+            subscribed.append(stock)
+            ib.reqMktData(stock)
+
+            # 保持运行直到断线
+            await ib.disconnectedEvent
+            print("Disconnected, reconnecting in 10s...")
+            await asyncio.sleep(10)
+
+        except Exception as e:
+            print(f"Error: {e}, retry in 10s")
+            await asyncio.sleep(10)
+
+asyncio.run(run_with_reconnect())
+```
+
+### 重连后必须重做的事
+
+| 操作 | 断线后状态 | 重连后是否自动恢复 |
+|------|-----------|-----------------|
+| `reqMktData` 行情订阅 | 全部丢失 | ❌ 必须重新订阅 |
+| `reqRealTimeBars` | 全部丢失 | ❌ 必须重新订阅 |
+| `reqMktDepth` Level 2 | 全部丢失 | ❌ 必须重新订阅 |
+| `positions()` 持仓 | 自动同步 | ✅ 重连后自动推送 |
+| `accountSummary` | 自动同步 | ✅ |
+| 未成交挂单 | 服务端保留 | ✅ 连接后自动恢复（若开启 Download open orders）|
+| `clientId` 绑定的订单 | 服务端保留 | ✅ |
+
+### IBC 每日重启时间设置
+
+避免 Gateway 在交易时段重启，把重启时间设在盘后：
+
+```ini
+# IBC config.ini / Docker 环境变量
+AutoRestartTime=11:59 PM   # 本地时间（东部）→ 约 23:59 ET，期货盘前
+# 或
+AUTO_RESTART_TIME=11:59 PM  # gnzsnz/ib-gateway Docker
+```
+
+IB Gateway 内置的强制重启在约 23:45 UTC（18:45 ET），与 IBC AutoRestartTime 是不同机制。两个重启窗口都要确保策略能自动恢复。
 
 ---
 
