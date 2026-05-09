@@ -70,13 +70,14 @@ def get_batch_quotes(c, symbols: list) -> dict:
     resp.raise_for_status()
     quotes = resp.json()
     result = {}
-    for sym, q in quotes.items():
+    for sym, item in quotes.items():
+        q = item.get("quote", {})
         result[sym] = {
             "bid": q.get("bidPrice"),
             "ask": q.get("askPrice"),
             "last": q.get("lastPrice"),
             "volume": q.get("totalVolume"),
-            "change_pct": q.get("netPercentChangeInDouble"),
+            "change_pct": q.get("netPercentChange") or q.get("netPercentChangeInDouble"),
         }
     return result
 
@@ -185,10 +186,12 @@ resp.raise_for_status()
 ### 铁鹰（Iron Condor）—— 使用 OrderBuilder 手动构建
 
 ```python
+from schwab.orders.generic import OrderBuilder
 from schwab.orders.common import (
-    OrderBuilder, OrderType, Duration, Session, ComplexOrderStrategyType
+    OrderType, Duration, Session, ComplexOrderStrategyType,
+    OptionInstruction, OrderStrategyType,
 )
-from schwab import orders
+import datetime
 
 # 铁鹰 = 牛市价差（put side）+ 熊市价差（call side）
 # 需要手动构建 OrderBuilder（schwab-py 暂无铁鹰模板）
@@ -201,16 +204,17 @@ call_short = OptionSymbol("SPY", expiry, "C", "560").build()
 call_long = OptionSymbol("SPY", expiry, "C", "570").build()
 
 iron_condor = (
-    orders.common.OrderBuilder()
+    OrderBuilder()
     .set_order_type(OrderType.NET_CREDIT)
     .set_price(2.00)  # 期望收到的净权利金
     .set_duration(Duration.DAY)
     .set_session(Session.NORMAL)
     .set_complex_order_strategy_type(ComplexOrderStrategyType.IRON_CONDOR)
-    .add_option_leg(orders.common.OptionInstruction.SELL_TO_OPEN, put_short, 1)
-    .add_option_leg(orders.common.OptionInstruction.BUY_TO_OPEN, put_long, 1)
-    .add_option_leg(orders.common.OptionInstruction.SELL_TO_OPEN, call_short, 1)
-    .add_option_leg(orders.common.OptionInstruction.BUY_TO_OPEN, call_long, 1)
+    .set_order_strategy_type(OrderStrategyType.SINGLE)
+    .add_option_leg(OptionInstruction.SELL_TO_OPEN, put_short, 1)
+    .add_option_leg(OptionInstruction.BUY_TO_OPEN, put_long, 1)
+    .add_option_leg(OptionInstruction.SELL_TO_OPEN, call_short, 1)
+    .add_option_leg(OptionInstruction.BUY_TO_OPEN, call_long, 1)
 )
 resp = c.place_order(account_hash, iron_condor.build())
 resp.raise_for_status()
@@ -220,16 +224,22 @@ resp.raise_for_status()
 
 ```python
 from schwab.orders.equities import equity_sell_limit
-from schwab.orders.common import one_cancels_other, OrderType, Duration
+from schwab.orders.generic import OrderBuilder
+from schwab.orders.common import (
+    one_cancels_other, OrderType, Duration, Session,
+    OrderStrategyType, EquityInstruction,
+)
 
 # 买入后设置 OCO：触及 $200 止盈 或 $170 止损
 take_profit = equity_sell_limit("AAPL", 10, 200.0).set_duration(Duration.GOOD_TILL_CANCEL)
 stop_loss = (
-    orders.common.OrderBuilder()
+    OrderBuilder()
     .set_order_type(OrderType.STOP)
     .set_stop_price(170.0)
     .set_duration(Duration.GOOD_TILL_CANCEL)
-    .add_equity_leg(orders.common.EquityInstruction.SELL, "AAPL", 10)
+    .set_session(Session.NORMAL)
+    .set_order_strategy_type(OrderStrategyType.SINGLE)
+    .add_equity_leg(EquityInstruction.SELL, "AAPL", 10)
 )
 
 oco = one_cancels_other(take_profit, stop_loss)
@@ -293,6 +303,8 @@ for order in open_orders:
 
 ```python
 def cancel_all_open_orders(c, account_hash: str):
+    import time
+
     open_orders = get_open_orders(c, account_hash)
     cancelled = []
     for order in open_orders:

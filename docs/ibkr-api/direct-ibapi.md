@@ -5,7 +5,7 @@ IBKR 有两条"直接调用"路径，各有不同的适用场景：
 | 路径 | 协议 | 适用场景 |
 |------|------|---------|
 | 官方 `ibapi`（TWS API） | TCP Socket | 需要全功能（期货/期权/完整订单类型），不想依赖第三方 |
-| Web API + `requests` | HTTPS REST | 轻量查询、Cloud 部署、无法运行 TWS 桌面进程 |
+| Web API + `requests` | HTTPS REST | 轻量查询、标准 HTTP 集成；个人账户通常配合 CP Gateway/ibeam，OAuth 直连需额外配置 |
 
 **绝大多数 Python 项目应优先用 `ib_async`**（见 SKILL.md）。本文档面向：想理解底层机制、移植到非 Python 环境、或明确需要用官方库的场景。
 
@@ -236,7 +236,7 @@ app.disconnect()
 
 IBKR Web API（Client Portal API）是标准 HTTPS REST，可以用任何语言的 HTTP 客户端调用。
 
-**前置条件**：本地必须运行一个 **CP Gateway** 进程（Java 程序，负责 session 管理和转发请求），或用 ibeam Docker 自动化运行。
+**前置条件**：个人账户最常见方式是运行一个 **CP Gateway** 进程（Java 程序，负责 session 管理和转发请求），或用 ibeam Docker 自动化运行。经 IBKR 配置过 OAuth 1.0a/2.0 的账户/机构可以直连 `https://api.ibkr.com/v1/api`，不需要本地 Gateway。
 
 ### Gateway 地址
 
@@ -246,9 +246,9 @@ IBKR Web API（Client Portal API）是标准 HTTPS REST，可以用任何语言�
 
 所有请求发往 `localhost:5000`。Gateway 使用自签名证书，Python 中需加 `verify=False`。
 
-### Session 保活（每次请求前必须调用）
+### Session 保活
 
-Gateway session 默认 **60 分钟**超时，需要定期发送 tickle 保活：
+CP Gateway session 会在无操作后超时。IBKR 文档建议定期调用 `/tickle`，常见做法是约每 60 秒调用一次，并在访问 `/iserver` 端点前确认 brokerage session 状态：
 
 ```python
 import requests, urllib3
@@ -454,13 +454,13 @@ print(resp.json())
 
 | 场景 | 推荐方式 |
 |------|---------|
-| Python 项目，需要全功能（期货/期权/实时行情/完整订单） | `ib_async`（ib_insync 的维护版）|
+| Python 项目，需要全功能（期货/期权/实时行情/完整订单） | `ib_async` |
 | 理解底层机制 / 需要官方最新特性 | `ibapi` 直接使用（本文路径一）|
 | 非 Python 环境（Go/JS/Rust） | Web API + 原生 HTTP 客户端（本文路径二）|
-| Cloud 服务器 + 简单查询（无需 TWS 进程）| Web API + requests + ibeam Docker |
+| Cloud 服务器 + 简单查询（不跑 TWS/Gateway 桌面）| Web API + requests + ibeam/CP Gateway，或已获批的 OAuth 直连 |
 | 高频交易 / 机构级别 | FIX API（需单独申请，不在本文范围）|
 
 **核心区别**：
 - `ibapi` 和 `ib_async` 走同一条 TCP socket 路径，功能完全等价，只是代码写法不同
-- Web API 是独立的 HTTPS 路径，功能略少（不支持完整期货下单、部分高级订单类型），但更适合云部署
-- TWS API 需要本地运行 TWS/Gateway 进程；Web API 需要本地/Docker 运行 CP Gateway 进程
+- Web API 是独立的 HTTPS 路径，功能略少（部分高级订单/数据能力不如 TWS API），但更适合标准 HTTP 集成
+- TWS API 需要本地运行 TWS/Gateway 进程；Web API 个人常用路径需要本地/Docker 运行 CP Gateway，OAuth 直连则需要 IBKR 额外配置

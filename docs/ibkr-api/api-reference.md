@@ -175,8 +175,8 @@ bracket = ib.bracketOrder('BUY', 100, limitPrice=180.0,
 ### 历史数据不可用情形
 
 - 30 秒以下 bar 超过 6 个月前
-- 已到期期权/期权历史（按到期日起 2 年截止）
-- 已到期期货超过到期 2 年
+- 已到期期权、期货期权、权证和结构化产品历史数据不可用
+- 已到期期货数据通常仅保留到到期后约 2 年
 - 已退市证券
 - 组合合约（Combo）的原生历史数据
 
@@ -187,7 +187,7 @@ bracket = ib.bracketOrder('BUY', 100, limitPrice=180.0,
 ### 请求速率上限
 
 ```
-默认: 50 条消息/秒（= market data lines / 2 = 100 / 2）
+默认: 50 个 API 请求/秒（默认 100 条 market data lines / 2）
 超限后: Error 100，连续 3 次断开连接
 ```
 
@@ -206,7 +206,7 @@ bracket = ib.bracketOrder('BUY', 100, limitPrice=180.0,
 - 默认 100 条并发行情订阅
 - `ib.reqMktData()` 每次消耗一条线；`ib.cancelMktData()` 释放
 - 查看使用量：TWS 中按 `Ctrl+Alt+=`
-- 超限后新订阅返回空数据（不报错）
+- 超限后通常返回 Error 101 或订阅失败
 
 ---
 

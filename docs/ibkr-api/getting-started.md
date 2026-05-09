@@ -7,8 +7,8 @@ IBKR 提供三套 API，按使用场景选择：
 | API | 协议 | Python 首选库 | 适用场景 |
 |-----|------|--------------|---------|
 | **TWS API** | TCP Socket（本地）| `ib_async` | 全功能：实时/历史行情、完整订单类型、期货/外汇/期权 |
-| **Web API（CP API）** | REST + WebSocket | `requests` | 轻量 HTTP，适合无桌面云服务器（需 ibeam Docker） |
-| **FIX API** | FIX 协议 | 机构专用 | 超高频，需单独申请 |
+| **Web API** | REST + WebSocket | `requests` / `ibind` | 标准 HTTP；个人账户通常通过 CP Gateway/ibeam，OAuth 直连需额外申请/配置 |
+| **FIX API** | FIX 协议 | 机构专用 | 低延迟机构接入，需单独申请 |
 
 **绝大多数个人量化场景使用 TWS API + ib_async。**
 
@@ -20,11 +20,13 @@ IBKR 提供三套 API，按使用场景选择：
 
 在 [interactivebrokers.com](https://www.interactivebrokers.com) 开设账户。同时开通 **Paper Trading Account**（纸面交易账户），用于 API 开发测试，完全免费。
 
+API 使用通常要求账户已完全开通并入金。Paper 账户可以测试交易流程，但实时行情权限通常跟随 live 用户的市场数据订阅设置。
+
 ### 2. 下载 IB Gateway 或 TWS
 
 | 应用 | 特点 | 推荐用途 |
 |------|------|---------|
-| **IB Gateway（Stable）** | 无 UI，轻量，占用资源少 40% | 生产/服务器环境 |
+| **IB Gateway（Stable）** | 无完整交易 UI，较轻量 | 生产/服务器环境 |
 | IB Gateway（Latest）| 含最新特性 | 需要新 API 功能时 |
 | Trader Workstation（TWS）| 有完整图形界面 | 开发调试（可视化确认）|
 
@@ -61,7 +63,7 @@ IBKR 提供三套 API，按使用场景选择：
 pip install ib_async
 ```
 
-ib_async 是 ib_insync 的维护继承版本（原作者于 2024 年初去世后社区维护）。**不需要同时安装官方 `ibapi`**，ib_async 内部已实现完整协议。
+ib_async 是 ib_insync 的社区维护继承版本。**不需要同时安装官方 `ibapi`**，ib_async 内部已实现完整协议。
 
 ---
 
@@ -150,9 +152,9 @@ ib.disconnect()
 
 [IBC](https://github.com/IbcAlpha/IBC) 自动注入凭据到 TWS/Gateway 登录界面，适合服务器无人值守运行。
 
-- 仅适用于 **offline 版本** TWS/Gateway（不是自动更新版）
+- TWS 必须使用 **offline/standalone** 版本（不是自动更新版）；IB Gateway 本身不走 TWS 的自动更新模式，但生产环境仍建议固定 stable/latest 版本并验证后升级
 - 支持 IBKR Mobile 2FA（配置重试窗口）
-- 不支持硬件 token
+- 硬件 token、特殊 2FA 流程需要在目标账户上单独实测
 
 关键配置（`config.ini`）：
 
@@ -168,6 +170,8 @@ AcceptIncomingConnectionAction=accept
 ### Web API Gateway 无头认证 — ibeam
 
 [ibeam](https://github.com/Voyz/ibeam) 基于 Selenium + Docker，自动化 Client Portal Web API Gateway 的认证。
+
+OAuth 1.0a/2.0 直连 `api.ibkr.com` 不需要 CP Gateway，但通常需要额外审批、密钥配置或机构/第三方接入流程；个人量化脚本最常见路径仍是 CP Gateway + ibeam。
 
 ```yaml
 # docker-compose.yml
@@ -198,13 +202,13 @@ curl -k https://localhost:5000/v1/api/one/user
 
 | 数据级别 | 费用 | 使用方式 |
 |---------|------|---------|
-| Cboe One + IEX（部分股票）| 免费 | 默认实时 |
-| 15 分钟延迟数据 | 免费 | `ib.reqMarketDataType(3)` |
-| NYSE/NASDAQ 综合实时 | $1.5-14/月/交易所 | 需在 Account Management 订阅 |
-| 期货实时（CME/NYMEX 等）| $10-30/月/交易所 | 需单独订阅 |
+| Cboe One + IEX（US 股票/ETF 非综合实时）| 免费 | 账户默认可用；不是全市场 NBBO 综合源 |
+| 延迟数据 | 免费（可用市场）| `ib.reqMarketDataType(3)` |
+| NYSE/NASDAQ 综合实时 | 需按网络/交易所订阅 | 在 Account Management 订阅，以官网价格为准 |
+| 期货实时（CME/NYMEX 等）| 需按交易所订阅 | 以官网价格为准 |
 | Level 2 委托簿 | 需付费 | 订阅后 `ib.reqMktDepth()` |
 
-**坑**：TWS 界面里显示实时数据 ≠ API 可用。TWS 内某些数据走平台内协议免费，通过 API 属于 off-platform 使用需另行订阅。
+**坑**：实时行情权限按用户名和市场数据订阅控制，不按账户控制。TWS 界面、Paper 用户和 API 连接共用市场数据线（默认 100 条），实时/延迟/空值表现要以当前登录用户名的权限为准。
 
 详细定价：https://www.interactivebrokers.com/en/pricing/market-data-pricing.php
 

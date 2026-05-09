@@ -1,6 +1,6 @@
 # Web API vs TWS API 功能对比
 
-IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 是"交易导向，支持完整订单类型"。实际含义是：Web API 在账户管理、开户、资金方面更完整，但 TWS API 在**纯交易**和**市场数据**维度上仍有关键优势。
+IBKR 正在把 Client Portal Web API、Digital Account Management 和 Flex Web Service 归到统一的 **Web API** 伞下；旧的 CP Gateway/OAuth 1.0a 路径仍继续可用。实际选型上，Web API 在账户管理、开户、资金和标准 HTTP 集成方面更合适，但 TWS API 在**纯交易**和**市场数据**维度上仍有关键优势。
 
 ---
 
@@ -21,14 +21,14 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 | 功能 | TWS API | Web API |
 |------|---------|---------|
 | 实时快照（Level 1） | ✅ | ✅（最多 100 conids/次）|
-| 实时流式行情（WebSocket）| ✅ 持续订阅，无需轮询 | ✅ WebSocket，但依赖轮询触发 |
+| 实时流式行情 | ✅ 持续订阅，无需轮询 | ✅ WebSocket/REST 均有，但核心 snapshot 端点仍按请求限速 |
 | **Tick-by-Tick 逐笔成交** | ✅ `reqTickByTickData()` | ❌ **不支持** |
 | **实时 5 秒 Bar** | ✅ `reqRealTimeBars()` | ❌ **不支持** |
 | Level 2 市场深度（委托簿）| ✅ 最多 3 个并发 | ✅（有限制）|
 | 历史 K 线 | ✅ 最远 20 年+，多种粒度 | ✅ 但粒度/深度有限 |
 | 历史 Tick 数据 | ✅ `reqHistoricalTicks()` | ❌ **不支持** |
 | 市场扫描器（Streaming）| ✅ 订阅推送 | ✅ 仅轮询 |
-| 基本面数据（WSH 日历/财报）| ✅ | ⚠️ 部分支持（Morningstar 已移除）|
+| 基本面/日历/新闻 | ✅ | ⚠️ 端点覆盖不同，需按具体数据集核对 |
 | 新闻（流式）| ✅ | ⚠️ 有限 |
 | 期权隐含波动率/历史波动率 | ✅ | ⚠️ 部分支持 |
 
@@ -52,7 +52,7 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 | **Iceberg / Reserve 订单** | ✅ | ❌ **不支持** |
 | One-Cancels-All（OCA）| ✅ | ⚠️ 有限 |
 | 期货市价保护单（MKT PRT）| ✅ | ❌ |
-| Combo/Spread 多腿复合单 | ✅ BAG 类型，6 条腿 | ⚠️ 有限支持 |
+| Combo/Spread 多腿复合单 | ✅ BAG/Combo 支持，腿数受交易所和产品限制 | ⚠️ 有限支持 |
 | 分配单（FA Block Allocation）| ✅ | ✅ |
 
 **最关键差异**：所有 IBKR 算法订单（VWAP/TWAP/Adaptive Price/Arrival Price）只在 TWS API 上可用。Iceberg、Accumulate/Distribute 同样只有 TWS API。
@@ -61,15 +61,15 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 
 ### 3. 请求速率
 
-| 指标 | TWS API | Web API（CP Gateway）| Web API（OAuth）|
-|------|---------|---------------------|----------------|
-| 全局速率上限 | 50 消息/秒（随账户 market data lines 扩展）| **10 请求/秒（硬限制）** | 50 请求/秒 |
-| 超限后行为 | Error 100，3 次违规断线 | 429，IP 进 penalty box 15 分钟 | 429 |
-| 历史数据并发 | 50 | 5（`/iserver/marketdata/history`）| 5 |
-| 快照数据 | —（基于 market data lines）| 10 次/秒 | 10 次/秒 |
-| 扫描器 | 适度 | 1 次/15 分钟（params），1 次/秒（run）| 同左 |
+| 指标 | TWS API | Web API |
+|------|---------|---------|
+| 全局速率上限 | 50 消息/秒（Error 100）| **10 请求/秒/用户名** |
+| 超限后行为 | Error 100，可能断开客户端 | 429，违规 IP 可能进入约 10 分钟 penalty box |
+| 历史数据并发 | 50 | 5（`/iserver/marketdata/history`）|
+| 快照数据 | 基于 market data lines | `/iserver/marketdata/snapshot` 10 次/秒 |
+| 扫描器 | 流式/请求式 | `params` 1 次/15 分钟，`run` 1 次/秒 |
 
-**最关键差异**：CP Gateway 的 10 req/s 硬上限是一条严格红线。高频数据采集（监控几十个标的）用 Web API Gateway 很快触达上限；TWS API 可以同时订阅数百条 streaming 行情线，只要在账户 market data lines 限制内。
+**最关键差异**：Web API 的 10 req/s/用户名是严格红线。高频数据采集（监控几十个标的）用 Web API 很快触达上限；TWS API 更适合持续 streaming，但仍受账户 market data lines 限制（默认 100 条，可按权益、佣金或 booster 扩展）。
 
 ---
 
@@ -78,13 +78,13 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 | 维度 | TWS API | Web API |
 |------|---------|---------|
 | 协议 | TCP Socket 长连接 | HTTPS 请求/WebSocket |
-| Session 超时 | ❌ 无（只要 TWS/Gateway 在线）| ⚠️ **60 分钟无操作超时，需 tickle 保活** |
-| 并发 brokerage session | 多个 clientId 可同时连接 | **每个用户名只能有 1 个 brokerage session** |
-| Session 冲突 | 有，但 Gateway 可配置自动夺回主控权 | 登录 TWS / Client Portal / Mobile 会**踢掉** API session，无自动恢复 |
+| Session 超时 | TWS/Gateway 在线时 API socket 可持续；仍会受每日维护/重启影响 | 会无操作超时，需定期 `/tickle` 保活 |
+| 并发连接 | 多个 `clientId` 可同时连接同一个 TWS/Gateway；该登录进程本身占用一个用户名 session | 每个用户名只能有 1 个 brokerage session；部分只读端点可不建立 brokerage session |
+| Session 冲突 | TWS/Gateway 也可能遇到 competing session；IBC 可配置如何响应 | 登录 TWS / Client Portal / Mobile 可能使 Web API brokerage session 失效 |
 | 重连难度 | 事件驱动（`disconnectedEvent`）| 需要重新走 session 初始化流程 |
 | TWS 每日重启影响 | 每日约 23:45 UTC 断线需重连 | 每日约 01:00 local 短暂维护 |
 
-**最关键差异**：Web API 的单 session 限制是生产系统的核心痛点。如果用户同时打开了 Client Portal 网页、手机 App 或 TWS 桌面，API session 会被踢掉，不会有任何警告，下单请求直接失败。TWS API 没有这个限制。
+**最关键差异**：Web API 的单 brokerage session 限制是生产系统的核心痛点。如果同一用户名同时打开 Client Portal、手机 App、TWS 或 CP Gateway，session 可能竞争并导致交易端点失败。TWS API 不能消除用户名级竞争，但把多个策略脚本集中连接到同一个 TWS/Gateway 进程后，脚本之间可以用不同 `clientId` 共存。
 
 ---
 
@@ -95,15 +95,15 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 **TWS API** 的连接是纯 TCP socket，由 IB Gateway / TWS 进程管理：
 
 - 多个策略脚本可以用不同 `clientId` 同时连接同一个 Gateway，互不干扰
-- 移动端 IBKR App 同样会与 IB Gateway 竞争 brokerage session —— 但关键区别在于：IB Gateway 可通过 IBC 的 `ExistingSessionDetectedAction=primaryoverride` 配置，在被踢掉后**自动夺回主控权**，无需人工干预
-- 多个 Gateway/TWS 同时启动时，`ExistingSessionDetectedAction` 同样决定谁胜出
+- 移动端 IBKR App、TWS、IB Gateway 仍可能竞争同一用户名的 brokerage session
+- IBC 可通过 `ExistingSessionDetectedAction` 配置遇到已有 session 时的行为（例如覆盖、等待或退出）；是否自动覆盖应按账户风控决定
 
 **Web API** 的连接建立在 IBKR 的 "brokerage session" 之上：
 
 - 每个 IBKR 用户名同一时刻只允许一个活跃的 brokerage session
 - 移动 App、Client Portal 网页、CP Gateway 三者共用同一个 brokerage session 池
 - 任何一方发起新的 brokerage session，其他方的 session 即刻失效
-- 失效是静默的：CP Gateway 继续运行，但后续 API 请求返回 403 或空结果，不会主动通知
+- 失效可能表现为 `competing` 状态、403、503、空结果或交易端点失败；需要应用层显式检测 `/iserver/auth/status`
 
 ### 实际冲突场景
 
@@ -129,20 +129,20 @@ IBKR 官方的定位：Web API 是"modern REST API，功能最广泛"，TWS API 
 同一账号同时使用移动 App + IB Gateway（TWS API 路径）时：
 
 - 移动 App 打开 IBKR 会触发 brokerage session 竞争，Gateway 可能短暂被踢
-- IBC 配置 `ExistingSessionDetectedAction=primaryoverride` 后，Gateway 会自动检测到 session 丢失并重新夺回主控权，**整个过程无需人工干预**
-- 夺回过程中可能出现 Error 10197（"No market data during competing live session"）：这是行情权限短暂受限的提示，**不是连接断开**，Gateway 恢复主控权后行情自动恢复
+- IBC 配置 `ExistingSessionDetectedAction=primaryoverride` 后，可在检测到已有 session 时尝试覆盖并继续登录；这能降低人工干预，但不等于交易系统无需处理重连和权限恢复
+- 竞争过程中可能出现 Error 10197（"No market data during competing live session"）或行情短暂不可用；策略仍应处理行情恢复和重新订阅
 
 ### 结论：应用层兜不住，只有两条路
 
-**Web API 的 brokerage session 由 IBKR 服务端控制，应用层无法从根本上规避竞争。** `/logout` + `/reauthenticate` 的恢复脚本、定时重启 ibeam 容器等手段，在移动 App 仍然在线时几乎都会再次失效，社区已广泛验证此类方案只是缓解、不能根治。
+**Web API 的 brokerage session 由 IBKR 服务端控制，应用层无法从根本上规避同一用户名的竞争。** `/logout` + `/reauthenticate` 的恢复脚本、定时重启 ibeam 容器等手段可以缓解，但如果另一个客户端持续占用同一用户名，交易端点仍会反复失效。
 
 真正有效的只有两条路：
 
 #### 路径一：改用 TWS API + IB Gateway（推荐）
 
-IB Gateway 与 CP Gateway 的关键区别在于：IBC 的 `ExistingSessionDetectedAction=primaryoverride` 可让 Gateway 在被移动 App 踢掉 brokerage session 后**自动夺回主控权**：
+IB Gateway 与 CP Gateway 的关键区别在于：TWS API 允许多个策略脚本共用一个 Gateway 登录进程；IBC 还可以配置遇到已有 session 时的处理动作：
 
-- 手机用 IBKR App 触发 session 竞争 → Gateway 自动重新夺回 → 策略脚本无需任何处理
+- 手机用 IBKR App 触发 session 竞争 → Gateway/IBC 按配置处理 → 策略脚本仍需处理短暂断线、行情重订阅和订单状态核对
 - 多个策略脚本用不同 `clientId` 可同时连接同一个 Gateway
 - 夺回过程中偶发 Error 10197（行情权限短暂受限，非断连）：Gateway 恢复后自动消失
 
@@ -157,7 +157,7 @@ IBKR 个人账号可以在 **Account Management → Settings → Users & Access 
 子用户 myaccount_api  → CP Gateway / ibeam 专用，永远不在移动端登录
 ```
 
-这样两个用户名各自维护独立的 session，互不干扰。代价是需要维护两套登录凭据，且子账号登录 CP Gateway 后依然受 60 分钟 tickle 超时约束。
+这样两个用户名各自维护独立的 session，互不干扰。代价是需要维护两套登录凭据；市场数据订阅、交易权限按用户名生效；子账号登录 CP Gateway 后依然需要定期 tickle 保活。
 
 ### 推荐决策
 
@@ -165,15 +165,15 @@ IBKR 个人账号可以在 **Account Management → Settings → Users & Access 
 同时使用移动 App + API 策略？
 
   首选 → TWS API（IB Gateway + ib_async）
-         有 session 竞争，但 ExistingSessionDetectedAction=primaryoverride
-         让 Gateway 自动夺回主控权，策略脚本无感知
-         唯一需要处理的中断是每日重启（约 1–5 分钟），自动重连可覆盖
+         可让多个策略脚本共用一个 Gateway 登录进程
+         IBC 可配置 session 竞争时的处理动作
+         仍需处理每日维护/重启、行情重订阅和订单状态核对
 
   次选 → Web API + 创建专用 API 子账号（Users & Access Rights）
          两套用户名各走各的 session，彻底隔离
 
   不可行 → 同一账号同时跑 Web API + 移动 App
-           CP Gateway 无自动夺回机制，brokerage session 被踢后无法自恢复
+           CP Gateway 无法从根本上避免同一用户名的 brokerage session 竞争
 ```
 
 ---
@@ -221,7 +221,7 @@ IBKR 个人账号可以在 **Account Management → Settings → Users & Access 
 |------|---------|---------|
 | 语言支持 | Python/Java/C++/C#/VB.NET（官方）| 任意语言（标准 HTTP）|
 | 推荐 Python 库 | `ib_async`（第三方）| `requests`（标准库）|
-| 本地依赖 | 必须运行 TWS 或 IB Gateway | 必须运行 CP Gateway 或 ibeam Docker |
+| 本地依赖 | 必须运行 TWS 或 IB Gateway | CP Gateway/ibeam，或已获批并配置好的 OAuth 直连 |
 | 调试工具 | TWS 图形界面可视化确认 | Postman / curl 直接调试 |
 | 代码架构 | 异步回调（ibapi）或同步封装（ib_async）| 同步 REST（简单）+ WebSocket（流式）|
 | 并发性能 | 高（单连接处理百条 streaming）| 低（10 req/s 限制，REST 顺序执行）|
@@ -237,7 +237,7 @@ IBKR 个人账号可以在 **Account Management → Settings → Users & Access 
 | 需要 VWAP/TWAP/Adaptive 等算法订单 | **必须 TWS API**，Web API 没有 |
 | 同时监控 50+ 标的实时行情 | **推荐 TWS API**，Web API 10 req/s 容易触顶 |
 | 策略频繁下单（>10 次/秒）| **推荐 TWS API**，Web API Gateway 硬限 10/s |
-| 同时使用移动 App + API 策略 | **推荐 TWS API**，Gateway 可自动夺回 session；Web API 被踢后无法自恢复 |
+| 同时使用移动 App + API 策略 | **推荐 TWS API**，多个脚本可共用同一 Gateway；仍需处理用户名 session 竞争 |
 | Cloud 服务器，不想运行 Java 桌面进程 | Web API + ibeam Docker |
 | 需要开户 / 资金划转 / 报表 API | **必须 Web API** |
 | 轻量查询持仓/余额/当日订单 | Web API 够用 |
@@ -256,6 +256,6 @@ Web API 的单 session 限制在实际生产中频繁造成问题：
         → 策略无声地停止工作
 ```
 
-TWS API 同样有 session 竞争，但 IB Gateway 可通过 `ExistingSessionDetectedAction=primaryoverride` 自动夺回主控权，策略脚本不需要处理这个中断。多个 clientId 同时连接同一个 Gateway 互不干扰。
+TWS API 同样有 session 竞争，但多个策略脚本可以通过不同 `clientId` 同时连接同一个 Gateway，脚本之间互不干扰。IBC 的 `ExistingSessionDetectedAction=primaryoverride` 可降低人工处理 session 冲突的频率，但生产策略仍应实现重连、行情重订阅和订单状态核对。
 
 关于多 session 冲突的完整分析（包括 TWS API vs Web API 的底层机制差异、创建专用 API 子账号的方法、以及各类社区解法），参见上方 [多 Session 问题深度解析](#多-session-问题深度解析)。

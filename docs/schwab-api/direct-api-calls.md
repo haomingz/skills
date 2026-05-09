@@ -38,7 +38,12 @@ AUTH_BASE = "https://api.schwabapi.com/v1/oauth/authorize"
 TOKEN_URL = "https://api.schwabapi.com/v1/oauth/token"
 
 # 构造登录 URL（在浏览器中打开）
-auth_url = f"{AUTH_BASE}?response_type=code&client_id={CLIENT_ID}&redirect_uri={REDIRECT_URI}"
+auth_params = {
+    "response_type": "code",
+    "client_id": CLIENT_ID,
+    "redirect_uri": REDIRECT_URI,
+}
+auth_url = f"{AUTH_BASE}?{urlencode(auth_params)}"
 print("请在浏览器中打开此 URL 并完成登录：")
 print(auth_url)
 ```
@@ -116,7 +121,7 @@ def get_headers(access_token):
 
 # 单标的实时报价
 resp = requests.get(
-    "https://api.schwabapi.com/marketdata/v1/quotes/AAPL",
+    "https://api.schwabapi.com/marketdata/v1/AAPL/quotes",
     headers=get_headers(access_token),
 )
 resp.raise_for_status()
@@ -254,7 +259,7 @@ resp = requests.delete(
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
-| `/quotes/{symbol}` | GET | 单标的实时报价 |
+| `/{symbol}/quotes` | GET | 单标的实时报价 |
 | `/quotes` | GET | 批量报价（`?symbols=A,B,C`） |
 | `/pricehistory` | GET | 历史 K 线（`?symbol=AAPL&periodType=year`） |
 | `/chains` | GET | 期权链 |

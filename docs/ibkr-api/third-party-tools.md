@@ -25,11 +25,10 @@
 **GitHub**: https://github.com/ib-api-reloaded/ib_async  
 **文档**: https://ib-api-reloaded.github.io/ib_async/  
 **安装**: `pip install ib_async`  
-**Stars**: ~1500
 
 ### 是什么
 
-`ib_async` 是 `ib_insync` 的社区维护分支。原作者 Ewald de Wit 于 2024 年初去世，社区在 `ib-api-reloaded` 组织下接管维护并更名为 `ib_async`。
+`ib_async` 是 `ib_insync` 的社区维护继承版本，由 `ib-api-reloaded` 组织维护。
 
 核心价值：**把 IBKR 官方 ibapi 的异步回调架构封装成同步写法**，无需手动管理线程、`EWrapper` 回调和 `reqId` 映射。
 
@@ -150,7 +149,6 @@ for order in bracket:
 
 **GitHub**: https://github.com/IbcAlpha/IBC  
 **类型**: Java 工具（不是 Python 库）  
-**Stars**: ~2500  
 **用途**: 自动化 TWS / IB Gateway 的登录、对话框处理和日常重启
 
 ### 是什么
@@ -159,8 +157,8 @@ IBC（Interactive Brokers Controller）是一个 Java 程序，通过注入凭�
 
 ### 关键限制
 
-**IBC 只能与 offline（不自动更新）版本的 TWS/Gateway 配合使用。** 使用自动更新版本会导致 IBC 无法识别登录界面布局而启动失败。  
-下载地址（选 `offline` 版）：https://www.interactivebrokers.com/en/trading/ib-api.php
+**IBC 不能与 self-updating TWS 配合使用，TWS 必须安装 offline/standalone 版本。** IB Gateway 本身没有 TWS 那种自动更新模式，但生产环境仍建议固定 stable/latest 版本并在升级前测试。
+下载地址：https://www.interactivebrokers.com/en/trading/ib-api.php
 
 ### 安装
 
@@ -297,7 +295,7 @@ ibeam start
 
 ### Session 保活
 
-CP Gateway 有 60 分钟无操作超时。ibeam 内置 tickle 定时任务，自动调用 `/v1/api/tickle` 保持 session 活跃。
+CP Gateway 会在无操作后超时。ibeam 内置 tickle 定时任务，自动调用 `/v1/api/tickle` 保持 session 活跃。
 
 手动 tickle：
 
@@ -328,7 +326,6 @@ accounts = client.portfolio_accounts()
 
 **GitHub**: https://github.com/Voyz/ibind  
 **安装**: `pip install ibind`  
-**Stars**: ~400  
 **用途**: IBKR Web API（CP API）的 Python 客户端
 
 ### 是什么
@@ -421,7 +418,7 @@ client = IbkrClient(
 )
 ```
 
-OAuth 1.0a 适合生产云端部署——不依赖任何本地 CP Gateway 进程，完全无头。
+OAuth 1.0a 适合已经完成 IBKR 审批和密钥配置的云端部署——不依赖任何本地 CP Gateway 进程，完全无头。
 
 ### ibind vs 裸 requests 对比
 
@@ -445,7 +442,6 @@ OAuth 1.0a 适合生产云端部署——不依赖任何本地 CP Gateway 进程
 
 **GitHub**: https://github.com/gnzsnz/ib-gateway  
 **镜像**: `ghcr.io/gnzsnz/ib-gateway`  
-**Stars**: ~1500  
 **维护者**: gnzsnz（同时也是 ib_async 贡献者、ib_fundamental 作者）
 
 #### Docker Compose
@@ -515,7 +511,6 @@ services:
 
 **GitHub**: https://github.com/extrange/ibkr-docker  
 **镜像**: `ghcr.io/extrange/ibkr`  
-**Stars**: ~336
 
 #### 特点
 
@@ -581,7 +576,6 @@ volumes:
 
 **GitHub**: https://github.com/UnusualAlpha/ib-gateway-docker  
 **镜像**: `ghcr.io/unusualalpha/ib-gateway`  
-**Stars**: ~293
 
 #### 特点
 
@@ -622,7 +616,6 @@ ib.connect('127.0.0.1', 4002, clientId=1)  # Paper
 
 **GitHub**: https://github.com/heshiming/ibga  
 **镜像**: `heshiming/ibga`  
-**Stars**: ~43  
 **文档**: https://heshiming.github.io/ibga/
 
 #### 特点
@@ -678,7 +671,6 @@ ib.connect('127.0.0.1', 4000, clientId=1)
 
 | 维度 | gnzsnz | extrange | UnusualAlpha | ibga |
 |------|--------|----------|--------------|------|
-| Stars | ~1500 | ~336 | ~293 | ~43 |
 | 自动化实现 | IBC | IBC | IBC | JAuto + xdotool |
 | 默认进程 | IB Gateway | TWS | IB Gateway | IB Gateway |
 | API 端口 | 4003/4004 | 8888（统一）| 4001/4002（原生）| 4000 |
@@ -703,14 +695,13 @@ ib.connect('127.0.0.1', 4000, clientId=1)
 
 **GitHub**: https://github.com/quantbelt/ib_fundamental  
 **安装**: `pip install ib-fundamental`  
-**Stars**: ~100  
 **维护者**: gnzsnz（同 ib-gateway-docker 作者）
 
 #### 是什么
 
 `ib_fundamental` 把 IBKR TWS API 的 `reqFundamentalData`（ticker 258）返回的 XML 解析为 pandas DataFrame，免去手动处理 XML 的麻烦。
 
-**需要**: Reuters Fundamentals 或 LSEG 数据订阅（约 $7/月，在 IBKR Account Management → Market Data Subscriptions 开通）。
+**需要**: 对应 fundamentals 数据订阅（在 IBKR Account Management → Market Data Subscriptions 开通，价格以 IBKR 后台为准）。
 
 #### 安装
 
@@ -826,7 +817,6 @@ ibkr buy AAPL 10 --preview --json --profile gateway-paper
 
 **GitHub**: https://github.com/mattsta/icli  
 **作者**: mattsta（ib_async 核心维护者之一）  
-**Stars**: ~207  
 **用途**: 全功能交互式交易终端，面向快速交易和期权操作
 
 #### 是什么
@@ -1041,17 +1031,6 @@ services:
 | AI 客户端直接操作账户 | ibkr-mcp（Claude Desktop / Cursor）|
 | 需要 tick 数据 / algo 订单 | **必须用 TWS API 路径**，Web API 不支持 |
 
-### 各工具 GitHub Stars 和维护状态
+### 维护状态提示
 
-| 工具 | Stars | 维护状态 |
-|------|-------|---------|
-| ib_async | ~1500 | 活跃（社区维护，40+ 贡献者）|
-| IBC (IbcAlpha) | ~2500 | 活跃（官方背景社区）|
-| gnzsnz/ib-gateway | ~1500 | 活跃（ib_async 生态关联）|
-| ibeam | ~800 | 活跃（Voyz）|
-| ibind | ~400 | 活跃（Voyz，2026-05 仍在更新）|
-| extrange/ibkr-docker | ~336 | 活跃（每月更新 Gateway 版本）|
-| icli | ~207 | 活跃（mattsta）|
-| ib_fundamental | ~103 | 较活跃（gnzsnz）|
-| ibkr-mcp | — | 新兴（2025 年出现）|
-| ibkr-cli | — | 新兴（2026 年）|
+这些工具都属于社区项目，维护状态、镜像标签、环境变量和登录自动化能力会随 IBKR 登录界面与 API 版本变化。生产环境使用前应检查对应 GitHub 仓库的最新 release、issue 和镜像更新时间，并固定版本部署。

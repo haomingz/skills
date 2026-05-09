@@ -16,11 +16,11 @@ TOS 是 Schwab 旗下的交易平台（前 TD Ameritrade 资产），它内部�
 |------|------------------|-------------|
 | 官方状态 | ✅ 官方支持，有文档 | ❌ 未文档化，逆向工程 |
 | 账户 | 相同账户 | 相同账户 |
-| 稳定性 | 高，有 SLA | 低，随 TOS 客户端更新可能失效 |
-| 语言支持 | 任意（REST） | Node.js（非官方库） |
+| 稳定性 | 官方支持，有文档；个人开发者不要假定有交易级 SLA | 低，随 TOS 客户端更新可能失效 |
+| 语言支持 | 任意（REST） | 主流社区实现是 TypeScript/Node.js |
 | 推荐程度 | ✅ 首选 | ⚠️ 仅学习/实验 |
 
-TOS 和 Schwab REST API 操作的是**完全相同的账户和持仓**。在 TOS 桌面端下单，通过 Schwab API 也能看到；反之亦然。
+TOS 和 Schwab REST API 面向的是同一套 Schwab 经纪账户体系。通常在 TOS 下单后可通过 Schwab Trader API 查询，反之亦然；具体可见性仍取决于账户权限、API 产品授权和订单类型。
 
 ---
 
@@ -29,20 +29,20 @@ TOS 和 Schwab REST API 操作的是**完全相同的账户和持仓**。在 TOS
 ### 基本信息
 
 - **协议**：WebSocket，消息格式为自定义 JSON
-- **端点**：`wss://thinkorswim.schwabmeritrade.com/ws` （可能随版本变化）
-- **认证**：使用 Schwab OAuth access token（与 REST API 相同）
+- **端点**：社区实现当前使用 `wss://thinkorswim-services.schwab.com/Services/WsJson`（非官方，随时可能变化）
+- **认证**：使用 thinkorswim Web/OAuth 登录流得到的 token；不要假定它等同于 Schwab Trader REST API token
 - **状态**：非官方、未文档化、社区逆向工程
 
 ### 社区实现
 
-唯一较为完整的实现：
+一个较为完整的社区实现（仍是 Work in progress）：
 
 **huskly/tos-wsjson-client**（TypeScript/Node.js）
 - GitHub: `https://github.com/huskly/tos-wsjson-client`
 - 语言：TypeScript，支持 Node.js 和浏览器
 
-已支持的功能：
-- 认证（Schwab OAuth token）
+项目 README 声称已支持的功能：
+- 认证（thinkorswim/Schwab Web token）
 - 实时报价
 - 历史图表（Price History）
 - 账户持仓
@@ -60,8 +60,8 @@ import { WsJsonClient } from "tos-wsjson-client";
 
 const client = new WsJsonClient();
 
-// 使用 Schwab OAuth access token 认证（与 REST API 相同的 token）
-await client.authenticateWithAccessToken(accessToken, refreshToken);
+// 使用该库/thinkorswim 登录流得到的 token
+await client.authenticateWithAccessToken({ accessToken, refreshToken });
 
 // 实时报价
 for await (const { body: quote } of client.quotes(["AAPL", "TSLA"])) {
@@ -80,17 +80,17 @@ for await (const { body: candle } of client.chart(chartRequest)) {
 }
 
 // 账户持仓
-const positions = await client.accountPositions("YOUR_ACCOUNT_ID");
+for await (const { body: positions } of client.accountPositions("YOUR_ACCOUNT_ID")) {
+  console.log(positions);
+}
 
-// 下单
-const order = {
+// 限价股票下单示例（非官方接口，生产前必须小额实测）
+const order = await client.placeOrder({
+  accountNumber: "YOUR_ACCOUNT_ID",
   symbol: "AAPL",
   quantity: 1,
-  orderType: "MARKET",
-  instruction: "BUY",
-  assetType: "EQUITY",
-};
-await client.placeOrder(order);
+  limitPrice: 180.00,
+});
 ```
 
 ---
@@ -132,7 +132,7 @@ await client.placeOrder(order);
 ```
 需要自动化交易 Schwab 账户？
     ↓
-Python 项目 → schwab-py（官方 REST API 封装）
+Python 项目 → schwab-py（非官方库，封装官方 REST API）
     ↓
 非 Python 项目 → 直接调用 REST API（见 direct-api-calls.md）
     ↓

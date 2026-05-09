@@ -13,31 +13,38 @@
 
 ## REST API 端点概览
 
-所有 REST 请求基础 URL：`https://api.schwabmeritrade.com/trader/v1`
+Schwab REST API 使用 `api.schwabapi.com`，按功能分三组基础路径：
+
+```
+OAuth:       https://api.schwabapi.com/v1/oauth
+Market Data: https://api.schwabapi.com/marketdata/v1
+Trader:      https://api.schwabapi.com/trader/v1
+```
 
 schwab-py 封装后对应方法：
 
 | 功能分类 | schwab-py 方法 | HTTP 端点 |
 |---------|---------------|-----------|
-| 账户列表（哈希） | `get_account_numbers()` | GET /accounts/accountNumbers |
-| 账户详情 | `get_account(hash)` | GET /accounts/{accountHash} |
-| 所有账户 | `get_accounts()` | GET /accounts |
-| 下单 | `place_order(hash, spec)` | POST /accounts/{accountHash}/orders |
-| 查询订单 | `get_orders_for_account(hash)` | GET /accounts/{accountHash}/orders |
-| 查询单个订单 | `get_order(order_id, hash)` | GET /accounts/{accountHash}/orders/{orderId} |
-| 取消订单 | `cancel_order(order_id, hash)` | DELETE /accounts/{accountHash}/orders/{orderId} |
-| 预览订单 | `preview_order(hash, spec)` | POST /accounts/{accountHash}/previewOrder |
-| 历史交易 | `get_transactions(hash)` | GET /accounts/{accountHash}/transactions |
-| 实时报价 | `get_quote(symbol)` | GET /quotes/{symbol} |
-| 批量报价 | `get_quotes(symbols)` | GET /quotes |
-| 期权链 | `get_option_chain(symbol)` | GET /chains |
-| 期权到期日 | `get_option_expiration_chain(symbol)` | GET /expirationchain |
-| 历史行情 | `get_price_history(symbol, ...)` | GET /pricehistory |
-| 标的搜索 | `search_instruments(symbols)` | GET /instruments |
-| 标的详情 | `get_instrument_by_cusip(cusip)` | GET /instruments/{cusip} |
-| 市场时间 | `get_market_hours(markets)` | GET /markets |
-| 市场列表 | `get_market_hours_for_single_market(market)` | GET /markets/{market} |
-| 行情移动榜 | `get_movers(index, ...)` | GET /movers/{symbolId} |
+| 账户列表（哈希） | `get_account_numbers()` | GET `/trader/v1/accounts/accountNumbers` |
+| 账户详情 | `get_account(hash)` | GET `/trader/v1/accounts/{accountHash}` |
+| 所有账户 | `get_accounts()` | GET `/trader/v1/accounts` |
+| 下单 | `place_order(hash, spec)` | POST `/trader/v1/accounts/{accountHash}/orders` |
+| 查询订单 | `get_orders_for_account(hash)` | GET `/trader/v1/accounts/{accountHash}/orders` |
+| 查询全部账户订单 | `get_orders_for_all_linked_accounts()` | GET `/trader/v1/orders` |
+| 查询单个订单 | `get_order(order_id, hash)` | GET `/trader/v1/accounts/{accountHash}/orders/{orderId}` |
+| 取消订单 | `cancel_order(order_id, hash)` | DELETE `/trader/v1/accounts/{accountHash}/orders/{orderId}` |
+| 预览订单 | `preview_order(hash, spec)` | POST `/trader/v1/accounts/{accountHash}/previewOrder` |
+| 历史交易 | `get_transactions(hash, ...)` | GET `/trader/v1/accounts/{accountHash}/transactions` |
+| 实时报价 | `get_quote(symbol)` | GET `/marketdata/v1/{symbol}/quotes` |
+| 批量报价 | `get_quotes(symbols)` | GET `/marketdata/v1/quotes` |
+| 期权链 | `get_option_chain(symbol)` | GET `/marketdata/v1/chains` |
+| 期权到期日 | `get_option_expiration_chain(symbol)` | GET `/marketdata/v1/expirationchain` |
+| 历史行情 | `get_price_history(symbol, ...)` | GET `/marketdata/v1/pricehistory` |
+| 标的搜索/基本面 | `get_instruments(symbols, projection)` | GET `/marketdata/v1/instruments` |
+| 标的详情 | `get_instrument_by_cusip(cusip)` | GET `/marketdata/v1/instruments/{cusip}` |
+| 市场时间 | `get_market_hours(markets)` | GET `/marketdata/v1/markets` |
+| 单市场时间 | 直接 HTTP 调用 | GET `/marketdata/v1/markets/{market}` |
+| 行情移动榜 | `get_movers(index, ...)` | GET `/marketdata/v1/movers/{symbolId}` |
 
 ---
 
@@ -61,7 +68,7 @@ resp = c.get_price_history(
     period_type=Client.PriceHistory.PeriodType.YEAR,
     period=Client.PriceHistory.Period.ONE_YEAR,
     frequency_type=Client.PriceHistory.FrequencyType.DAILY,
-    frequency=Client.PriceHistory.Frequency.EVERY_DAY,
+    frequency=Client.PriceHistory.Frequency.DAILY,
     start_datetime=datetime.datetime(2024, 1, 1),
     end_datetime=datetime.datetime(2024, 12, 31),
     need_extended_hours_data=False,
@@ -78,9 +85,9 @@ data = resp.json()
 **FrequencyType 选项**：MINUTE, DAILY, WEEKLY, MONTHLY
 
 历史行情限制：
-- 分钟线：最近 10 交易日
-- 日线/周线：最多 20 年历史
-- **不支持期权、期货、外汇历史 K 线**
+- `periodType=day` 的分钟线 `period` 参数官方有效值最多到 10 天；用 `startDate/endDate` 时，社区库实测可返回更长区间，但不要把它当作稳定 SLA。
+- 日线/周线/月线的 `period` 官方有效值最多到 20 年；实际返回深度会随标的上市时间和 Schwab 数据可用性变化。
+- `schwab-py` 的便捷历史行情方法主要按股票/ETF 设计；期权、期货、外汇历史 K 线不要假定可用，需以接口实测为准。
 
 ### 实时报价
 
@@ -88,7 +95,8 @@ data = resp.json()
 # 单标的
 resp = c.get_quote("AAPL")
 data = resp.json()["AAPL"]
-# 包含：bidPrice, askPrice, lastPrice, totalVolume, highPrice, lowPrice 等
+quote = data["quote"]
+# quote 中包含：bidPrice, askPrice, lastPrice, totalVolume, highPrice, lowPrice 等
 
 # 多标的（批量，效率更高）
 resp = c.get_quotes(["AAPL", "MSFT", "TSLA", "SPY"])
@@ -141,11 +149,8 @@ resp = c.get_account(
 )
 positions = resp.json()["securitiesAccount"]["positions"]
 
-# 账户余额 + 持仓 + 委托
-resp = c.get_account(
-    account_hash,
-    fields=[Client.Account.Fields.POSITIONS, Client.Account.Fields.ORDERS]
-)
+# 账户订单需要走订单端点；get_account() 的 fields 目前只支持 positions
+resp = c.get_orders_for_account(account_hash)
 ```
 
 ### 查询订单
@@ -176,7 +181,7 @@ resp = c.get_orders_for_account(
 ```python
 resp = c.cancel_order(order_id, account_hash)
 resp.raise_for_status()
-# 204 No Content = 取消成功
+# 200 OK = 取消请求被接受
 ```
 
 ---
@@ -268,8 +273,7 @@ AAPL  251219C00200000  → AAPL 2025-12-19 200 Call
 ```
 
 **价格编码规则**：
-- 行权价 < 1000：乘以1000，前面补两个0，共8位
-- 行权价 ≥ 1000：乘以1000，前面补一个0，共8位
+- 行权价乘以 1000 后左侧补零到 8 位，例如 `200.00 -> 00200000`，`5040.00 -> 05040000`。
 
 使用 `OptionSymbol` 自动生成：
 
@@ -363,9 +367,9 @@ for exp, strikes in chain["callExpDateMap"].items():
 
 | 限制类型 | 限制值 | 超限响应 |
 |---------|--------|---------|
-| 全局 API 请求 | 120 次/分钟（应用级） | HTTP 429 |
-| 下单请求 | 0-120 次/分钟（注册时设定） | HTTP 429 |
-| 历史行情并发 | 建议 < 2 次/秒 | 可能返回 503 |
+| 非下单 REST 请求 | 常见限制为 120 次/分钟（应用级） | HTTP 429 |
+| 订单相关请求 | 0-120 次/分钟（App 注册时的 Order Limit） | HTTP 429 |
+| 历史行情高频并发 | 建议按 1-2 次/秒保守排队 | 可能返回 429/503 |
 
 超限重试模式：
 

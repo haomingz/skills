@@ -25,7 +25,7 @@ Interactive Brokers TWS API 与 Web API 学习与使用指南。
 
 ## 核心结论速查
 
-### IBKR 有官方 Python SDK 吗？
+### IBKR 有官方 Python API 包吗？
 
 官方提供 `ibapi`（原生回调架构，繁琐）。**推荐使用 `ib_async`**，是 `ib_insync` 的维护分支，提供简洁的同步写法，无需手动管理回调。
 
@@ -43,7 +43,7 @@ pip install ib_async
 
 ### 实时行情费用提示
 
-IBKR 免费提供 Cboe One + IEX 数据（部分股票），但 NYSE/NASDAQ 全市场综合数据、期货、期权实时数据**均需额外付费订阅**。详见 [broker-comparison.md](../broker-comparison.md)。
+IBKR 对 US-listed stocks/ETFs 提供免费的 Cboe One + IEX 非综合实时数据；NYSE/NASDAQ 全市场综合数据、期货、期权实时数据通常需要按市场另行订阅。详见 [broker-comparison.md](../broker-comparison.md)。
 
 ## 官方资源
 

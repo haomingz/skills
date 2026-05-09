@@ -13,7 +13,7 @@
 
 ### 第一步：创建开发者账号
 
-访问 [developer.schwab.com](https://developer.schwab.com)，点击 **Login** 使用你的 Schwab 经纪账户凭证登录（不是新建账号，直接使用现有账户登录）。
+访问 [developer.schwab.com](https://developer.schwab.com)，先创建并登录 **Schwab Developer** 账号。开发者门户账号与 Schwab 经纪账户登录不是同一个概念；后面的 OAuth 授权流程才会跳转到 Schwab 经纪账户登录页，让你选择要授权给 App 的账户。
 
 ### 第二步：申请 API 产品
 
@@ -21,8 +21,8 @@
 
 | 产品 | 说明 | 推荐 |
 |------|------|------|
-| **Accounts and Trading Production** | 完整功能：下单、账户数据、市场数据 | ✅ 推荐选这个 |
-| Market Data Production | 仅市场数据，不含交易功能 | 可单选 |
+| **Accounts and Trading Production** | 账户、持仓、订单、下单/改单/撤单；社区经验显示它通常覆盖 `schwab-py` 的主要功能 | ✅ 交易功能必选 |
+| **Market Data Production** | 行情、历史价格、期权链、movers 等市场数据接口 | ✅ 需要行情时也添加 |
 
 建议同时添加两个产品，覆盖所有使用场景。
 
@@ -33,18 +33,18 @@
 | 字段 | 推荐设置 | 说明 |
 |------|----------|------|
 | App Name | 任意名称 | 仅内部标识 |
-| Callback URL | `https://127.0.0.1:8182` | **关键**：必须与代码完全一致，包括末尾斜杠 |
-| Order Limit | 120 | 每分钟最大下单次数，建议设最大值 |
+| Callback URL | `https://127.0.0.1:8182` | **关键**：必须与代码完全一致，包括是否有末尾斜杠 |
+| Order Limit | 120 | 每分钟最大订单相关请求数（下单、改单、撤单），建议设最大值 |
 
 > **注意**：callback URL 大小写敏感，多一个斜杠都会导致认证失败。
 
-提交后进入 **pending 状态**，Schwab 审核通常需要 1-5 个工作日。审核通过后可在 Dashboard 查看 **App Key** 和 **App Secret**。
+提交后通常会进入 **Approved - Pending** 状态；这个名字有点迷惑，实际还不能用。等状态变为 **Ready For Use** 后，才能在 Dashboard 查看并使用 **App Key** 和 **App Secret**。审核通常需要几天，具体以 Schwab 后台状态为准。
 
 ---
 
 ## OAuth 认证流程详解
 
-Schwab 使用标准 **三路 OAuth 2.0 Authorization Code Flow**：
+Schwab 使用标准 **OAuth 2.0 Authorization Code Flow**：
 
 ```
 用户 → App → Schwab 登录页 → 回调 URL (含 code) → 换取 token
@@ -107,9 +107,11 @@ Access Token ──── 30 分钟 ──→ 过期（schwab-py 自动刷新）
 Refresh Token ─── 7 天 ───→ 过期（必须手动重新登录 OAuth）
 ```
 
-### 自动刷新脚本（推荐：每 6 天执行一次）
+### 重新生成 token（推荐：每 6 天手动做一次）
 
-使用 schwab-py 内置工具刷新 token：
+`schwab-py` 会自动用 refresh token 刷新 30 分钟有效的 access token，但 **7 天 refresh token 不能通过刷新延长**。接近 7 天时，需要重新走一次 OAuth 登录，生成新的 token 文件。
+
+使用 `schwab-py` 内置工具重新生成 token：
 
 ```bash
 # 安装后可直接使用此命令行工具
@@ -117,15 +119,15 @@ schwab-generate-token.py \
     --api_key YOUR_APP_KEY \
     --app_secret YOUR_APP_SECRET \
     --callback_url https://127.0.0.1:8182 \
-    --token_path /path/to/token.json
+    --token_file /path/to/token.json
 ```
 
-或在 Python 中触发刷新：
+或在 Python 中让 `easy_client()` 在 token 文件过旧时主动重新走登录流程：
 
 ```python
 from schwab import auth
 
-# easy_client 会自动检测 token 是否过期，过期则重新走登录流程
+# easy_client 会自动刷新 access token；token 文件超过 max_token_age 后会重新走 OAuth 登录流程
 c = auth.easy_client(
     api_key="YOUR_APP_KEY",
     app_secret="YOUR_APP_SECRET",
@@ -135,15 +137,17 @@ c = auth.easy_client(
 )
 ```
 
-### Cron 定时刷新（Linux/Mac）
+### 定时提醒或半自动重新生成（Linux/Mac）
+
+下面这种方式仍然需要浏览器登录或人工复制回调 URL，不适合无人值守服务器。更稳妥的做法是把它当作每周提醒，在有浏览器的机器上重新生成 token。
 
 ```bash
-# 每6天凌晨2点刷新 token（需要无头浏览器或手动流程）
+# 每6天凌晨2点尝试重新生成 token（仍需要交互式 OAuth）
 0 2 */6 * * /path/to/venv/bin/schwab-generate-token.py \
     --api_key $SCHWAB_KEY \
     --app_secret $SCHWAB_SECRET \
     --callback_url https://127.0.0.1:8182 \
-    --token_path /path/to/token.json
+    --token_file /path/to/token.json
 ```
 
 ### 从不同机器管理 Token
@@ -152,7 +156,7 @@ c = auth.easy_client(
 
 ```bash
 # 在本地生成
-schwab-generate-token.py --token_path ./token.json ...
+schwab-generate-token.py --token_file ./token.json ...
 
 # 传到服务器
 scp token.json user@server:/app/token.json
@@ -177,7 +181,7 @@ c = auth.client_from_token_file("./token.json", api_key, app_secret)
 
 **原因**：App 未获批准，或申请的功能未开通。
 
-**处理**：登录 developer.schwab.com 检查 App 状态是否为 Approved；期权交易需要 Schwab 账户单独开通期权权限。
+**处理**：登录 developer.schwab.com 检查 App 状态是否为 **Ready For Use**；期权交易需要 Schwab 账户单独开通期权权限。
 
 ### Callback URL 不匹配
 
@@ -190,7 +194,7 @@ c = auth.client_from_token_file("./token.json", api_key, app_secret)
 
 ### 429 Rate Limit Exceeded
 
-**原因**：超过 120 次/分钟的应用级限制。
+**原因**：超过非下单请求限速，或超过 App 中配置的订单相关请求上限（Order Limit，最高 120 次/分钟）。
 
 **处理**：
 
@@ -212,7 +216,7 @@ def safe_request(func, *args, **kwargs):
 排查顺序：
 1. 账户余额是否足够
 2. 期权交易权限是否开通（Level 1-4）
-3. 市场是否开盘（`c.get_market_hours()` 查询）
+3. 市场是否开盘（例如 `c.get_market_hours([Client.MarketHours.Market.EQUITY])` 查询）
 4. 期权符号格式是否正确（用 `get_option_chain()` 验证）
 5. 订单参数（数量、价格）是否合法
 
