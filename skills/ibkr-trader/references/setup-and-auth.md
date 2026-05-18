@@ -3,7 +3,7 @@
 ## Contents
 - API 类型选择
 - TWS / IB Gateway 安装与配置
-- 端口与连接参数
+- 连接发现顺序与连接参数
 - IBC 自动登录（TWS/Gateway）
 - ibeam Docker（Web API Gateway）
 - 连接模式与重连逻辑
@@ -59,7 +59,7 @@
 
 ---
 
-## 端口与连接参数
+## 连接发现顺序与连接参数
 
 | 环境 | 应用 | 端口 |
 |------|------|------|
@@ -68,25 +68,110 @@
 | 实盘账户 | IB Gateway | 4001 |
 | Paper（纸面交易） | IB Gateway | 4002 |
 
+### 端点解析优先级
+
+1. 读取环境变量：`IBKR_HOST` / `TWS_HOST`、`IBKR_PORT` / `TWS_PORT`、`IBKR_CLIENT_ID` / `TWS_CLIENT_ID`
+2. 没有环境变量时测试默认候选：`127.0.0.1:7497`、`127.0.0.1:4002`、`127.0.0.1:7496`、`127.0.0.1:4001`
+3. 默认候选均不通时，检查本机监听端口并筛选 `tws`、`ibgateway`、`jts`、`java` 相关进程
+
+### 环境变量示例
+
+```bash
+export IBKR_HOST=127.0.0.1
+export IBKR_PORT=4002
+export IBKR_CLIENT_ID=1
+```
+
+PowerShell：
+
+```powershell
+$env:IBKR_HOST = '127.0.0.1'
+$env:IBKR_PORT = '4002'
+$env:IBKR_CLIENT_ID = '1'
+```
+
+### 推荐连接骨架
+
 ```python
+import os
+import socket
 from ib_async import IB
 
+DEFAULT_ENDPOINTS = (
+    ('127.0.0.1', 7497),  # Paper TWS
+    ('127.0.0.1', 4002),  # Paper Gateway
+    ('127.0.0.1', 7496),  # Live TWS
+    ('127.0.0.1', 4001),  # Live Gateway
+)
+CONNECT_PROBE_TIMEOUT = 2.0  # seconds; keep endpoint discovery fast
+DEFAULT_CLIENT_ID = 1  # local single-script default; change when clientId conflicts
+
+def can_open(host, port, timeout=CONNECT_PROBE_TIMEOUT):
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+def resolve_ibkr_endpoint():
+    env_host = os.getenv('IBKR_HOST') or os.getenv('TWS_HOST')
+    env_port = os.getenv('IBKR_PORT') or os.getenv('TWS_PORT')
+    host = env_host or '127.0.0.1'
+    client_id = int(os.getenv('IBKR_CLIENT_ID') or os.getenv('TWS_CLIENT_ID') or DEFAULT_CLIENT_ID)
+
+    candidates = []
+    if env_port:
+        candidates.append((host, int(env_port)))
+    elif env_host:
+        candidates.extend((host, default_port) for _, default_port in DEFAULT_ENDPOINTS)
+    candidates.extend(DEFAULT_ENDPOINTS)
+
+    seen = set()
+    for candidate_host, candidate_port in candidates:
+        if (candidate_host, candidate_port) in seen:
+            continue
+        seen.add((candidate_host, candidate_port))
+        if can_open(candidate_host, candidate_port):
+            return candidate_host, candidate_port, client_id
+
+    raise RuntimeError("Set IBKR_HOST and IBKR_PORT after inspecting local listeners.")
+
+host, port, client_id = resolve_ibkr_endpoint()
 ib = IB()
-
-# Paper TWS（最常用于开发测试）
-ib.connect('127.0.0.1', 7497, clientId=1)
-
-# Paper Gateway
-# ib.connect('127.0.0.1', 4002, clientId=1)
-
-# 实盘 Gateway（谨慎）
-# ib.connect('127.0.0.1', 4001, clientId=1)
+ib.connect(host, port, clientId=client_id)
 ```
 
 **clientId 规则**：
 - 同一 TWS 实例内必须唯一（0-999）
 - 多进程/多脚本同时运行时，每个用不同的 clientId
 - clientId=0 是特殊的 master client
+
+### 本机监听端口探测
+
+Windows：
+
+```powershell
+Get-NetTCPConnection -State Listen |
+    ForEach-Object {
+        $p = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
+        [PSCustomObject]@{
+            LocalAddress = $_.LocalAddress
+            LocalPort = $_.LocalPort
+            ProcessId = $_.OwningProcess
+            ProcessName = $p.ProcessName
+        }
+    } |
+    Where-Object { $_.ProcessName -match 'tws|ibgateway|jts|java' -or $_.LocalPort -in 7496,7497,4001,4002 } |
+    Sort-Object LocalPort
+```
+
+Linux/macOS：
+
+```bash
+lsof -nP -iTCP -sTCP:LISTEN | grep -Ei 'tws|ibgateway|jts|java|7496|7497|4001|4002'
+```
+
+找到监听地址和端口后，设置 `IBKR_HOST` 与 `IBKR_PORT`，再重新连接。
 
 ---
 
@@ -181,8 +266,9 @@ curl -X GET "https://localhost:5000/v1/api/one/user" -k
 ```python
 from ib_async import IB
 
+host, port, client_id = resolve_ibkr_endpoint()
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)
+ib.connect(host, port, clientId=client_id)
 ```
 
 ### 带超时的连接检查
@@ -190,7 +276,8 @@ ib.connect('127.0.0.1', 7497, clientId=1)
 ```python
 import time
 
-def connect_with_retry(host='127.0.0.1', port=7497, client_id=1, max_retries=5):
+def connect_with_retry(max_retries=5):
+    host, port, client_id = resolve_ibkr_endpoint()
     ib = IB()
     for attempt in range(max_retries):
         try:
@@ -222,8 +309,9 @@ from ib_async import IB, util
 
 util.startLoop()  # 仅在 Jupyter Notebook 中需要
 
+host, port, client_id = resolve_ibkr_endpoint()
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)
+ib.connect(host, port, clientId=client_id)
 ```
 
 ---

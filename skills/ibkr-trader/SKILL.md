@@ -1,6 +1,6 @@
 ---
 name: ibkr-trader
-description: 此技能用于通过 Interactive Brokers（IBKR）API 进行自动化交易操作，包括连接 TWS/IB Gateway、合约查询与校验、行情数据获取（实时/历史）、下单交易（股票/期权/期货/外汇）、账户和持仓查询。优先使用 ib_async（ib_insync 的维护分支）封装库。适用于用户提到 IBKR API、Interactive Brokers、TWS API、ib_insync、ib_async、IB Gateway、ibapi、placeOrder、reqHistoricalData、qualifyContracts、期货下单、全球多市场自动化交易的场景。
+description: 此技能用于通过 Interactive Brokers（IBKR）API 进行自动化交易操作，包括连接 TWS/IB Gateway、合约查询与校验、行情数据获取（实时/历史）、下单交易（股票/期权/期货/外汇）、账户和持仓查询。优先使用 ib_async（ib_insync 的维护分支）封装库，并优先从环境变量解析 IB Gateway/TWS 的地址、端口和 clientId。适用于用户提到 IBKR API、Interactive Brokers、TWS API、ib_insync、ib_async、IB Gateway、ibapi、placeOrder、reqHistoricalData、qualifyContracts、期货下单、全球多市场自动化交易的场景。
 ---
 
 # IBKR Trader API 调用（TWS API）
@@ -50,19 +50,69 @@ IBKR API 进度:
 
 **步骤 1: 连接 TWS/Gateway**
 
+解析连接端点时按顺序执行：
+
+1. 优先读取环境变量：`IBKR_HOST` / `TWS_HOST`、`IBKR_PORT` / `TWS_PORT`、`IBKR_CLIENT_ID` / `TWS_CLIENT_ID`
+2. 没有环境变量时使用默认候选：`127.0.0.1:7497`（Paper TWS）、`127.0.0.1:4002`（Paper Gateway）、`127.0.0.1:7496`（实盘 TWS）、`127.0.0.1:4001`（实盘 Gateway）
+3. 默认地址和端口不通时，继续探索本机监听端口，优先查找 `tws`、`ibgateway`、`jts`、`java` 相关进程并测试其监听地址与端口
+
 ```python
+import os
+import socket
 from ib_async import IB, util
 
 # Jupyter Notebook 中需要取消注释下行
 # util.startLoop()
 
+DEFAULT_ENDPOINTS = (
+    ('127.0.0.1', 7497),  # Paper TWS
+    ('127.0.0.1', 4002),  # Paper Gateway
+    ('127.0.0.1', 7496),  # Live TWS
+    ('127.0.0.1', 4001),  # Live Gateway
+)
+CONNECT_PROBE_TIMEOUT = 2.0  # seconds; keep endpoint discovery fast
+DEFAULT_CLIENT_ID = 1  # local single-script default; change when clientId conflicts
+
+def can_open(host, port, timeout=CONNECT_PROBE_TIMEOUT):
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+def resolve_ibkr_endpoint():
+    env_host = os.getenv('IBKR_HOST') or os.getenv('TWS_HOST')
+    env_port = os.getenv('IBKR_PORT') or os.getenv('TWS_PORT')
+    host = env_host or '127.0.0.1'
+    client_id = int(os.getenv('IBKR_CLIENT_ID') or os.getenv('TWS_CLIENT_ID') or DEFAULT_CLIENT_ID)
+
+    candidates = []
+    if env_port:
+        candidates.append((host, int(env_port)))
+    elif env_host:
+        candidates.extend((host, default_port) for _, default_port in DEFAULT_ENDPOINTS)
+    candidates.extend(DEFAULT_ENDPOINTS)
+
+    seen = set()
+    for candidate_host, candidate_port in candidates:
+        if (candidate_host, candidate_port) in seen:
+            continue
+        seen.add((candidate_host, candidate_port))
+        if can_open(candidate_host, candidate_port):
+            return candidate_host, candidate_port, client_id
+
+    raise RuntimeError(
+        "No IBKR TWS/Gateway socket found. Inspect local listeners for "
+        "tws/ibgateway/jts/java processes, then set IBKR_HOST and IBKR_PORT."
+    )
+
+host, port, client_id = resolve_ibkr_endpoint()
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=1)  # Paper TWS
-# ib.connect('127.0.0.1', 4002, clientId=1)  # Paper Gateway
+ib.connect(host, port, clientId=client_id)
 print(ib.isConnected())  # True
 ```
 
-每个连接必须使用唯一的 `clientId`，同一 TWS 实例可同时连接多个客户端。
+每个连接必须使用唯一的 `clientId`，同一 TWS 实例可同时连接多个客户端。端点自动解析失败时读取 `references/setup-and-auth.md` 的“连接发现顺序”排查监听进程。
 
 **步骤 2: 校验合约**
 
@@ -198,6 +248,7 @@ ib.disconnect()
 
 - **pacing violation**：历史数据 10 分钟内 ≤ 60 次请求；相同合约 2 秒内 < 6 次；批量请求加 `time.sleep(2)`
 - **clientId 冲突**：同一 TWS 会话中每个连接需唯一 clientId；错误 507 表示 clientId 已被使用
+- **端点发现失败**：优先设置 `IBKR_HOST`、`IBKR_PORT`、`IBKR_CLIENT_ID`；默认端口不通时检查本机 `tws` / `ibgateway` / `jts` / `java` 监听端口
 - **Read-Only 模式**：TWS 默认启用，需在 API Settings 中关闭才能下单
 - **市场数据订阅**：免费层仅有 Cboe One + IEX（部分股票），Period 期权/期货实时数据需额外付费订阅
 - **100 市场数据线上限**：默认账户 100 条并发行情线；`Ctrl+Alt+=` 可查看当前使用量
@@ -208,6 +259,7 @@ ib.disconnect()
 ## 质量检查
 
 - [ ] `ib.isConnected()` 返回 `True` 后再调用任何请求
+- [ ] 已按环境变量、默认端口、本机监听进程的顺序解析 TWS/Gateway 地址和端口
 - [ ] 所有合约已调用 `qualifyContracts()` 且 `conId > 0`
 - [ ] 历史数据请求频率符合 pacing 限制（批量时加延迟）
 - [ ] 市场数据类型已设置（`reqMarketDataType`）
